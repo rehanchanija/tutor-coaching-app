@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Home, Package, Users, User } from 'lucide-react-native';
+import { Home, Package, Users, User, MessageCircle } from 'lucide-react-native';
 import { colors, radius, spacing } from '../theme/Theme';
 
 const { width } = Dimensions.get('window');
@@ -27,6 +27,8 @@ const getTabIcon = (tabName: string, isActive: boolean, size: number) => {
       return <Users {...props} />;
     case 'Profile':
       return <User {...props} />;
+    case 'Chat':
+      return <MessageCircle {...props} />;
     default:
       return <Home {...props} />;
   }
@@ -37,7 +39,8 @@ export const TabBar: React.FC<TabBarProps> = ({ tabs, activeTab, onChangeTab }) 
     'Dashboard': 'Home',
     'Batches': 'Batch',
     'Students': 'Students',
-    'Profile': 'Profile'
+    'Profile': 'Profile',
+    'Chat': 'Chat'
   };
 
   return (

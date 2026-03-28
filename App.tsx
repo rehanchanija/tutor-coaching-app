@@ -14,11 +14,13 @@ import { NotificationScreen } from './src/screens/NotificationScreen';
 import { SupportScreen } from './src/screens/SupportScreen';
 import { PrivacyPolicyScreen } from './src/screens/PrivacyPolicyScreen';
 import { ChatSupportScreen } from './src/screens/ChatSupportScreen';
+import { MessageScreen } from './src/screens/MessageScreen';
+import { BatchChatScreen } from './src/screens/BatchChatScreen';
 import { TabBar } from './src/components/TabBar';
 import { colors } from './src/theme/Theme';
 
-type ScreenName = 'Login' | 'Main' | 'Subject' | 'Course' | 'StudentDetail' | 'Notifications' | 'Support' | 'Privacy' | 'ChatSupport';
-type TabName = 'Dashboard' | 'Batches' | 'Students' | 'Profile';
+type ScreenName = 'Login' | 'Main' | 'Subject' | 'Course' | 'StudentDetail' | 'Notifications' | 'Support' | 'Privacy' | 'ChatSupport' | 'BatchChat';
+type TabName = 'Dashboard' | 'Batches' | 'Students' | 'Chat' | 'Profile';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -26,6 +28,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState<TabName>('Dashboard');
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
+  const [selectedBatchChat, setSelectedBatchChat] = useState<{id: string, name: string} | null>(null);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -114,6 +117,16 @@ const App = () => {
       );
     }
 
+    if (currentScreen === 'BatchChat' && selectedBatchChat) {
+      return (
+        <BatchChatScreen
+          batchId={selectedBatchChat.id}
+          batchName={selectedBatchChat.name}
+          onBack={() => setCurrentScreen('Main')}
+        />
+      );
+    }
+
     // Main screen with Tabs
     switch (activeTab) {
       case 'Dashboard':
@@ -135,6 +148,15 @@ const App = () => {
             onNavigatePrivacy={() => setCurrentScreen('Privacy')}
           />
         );
+      case 'Chat':
+        return (
+          <MessageScreen 
+            onNavigateChat={(id, name) => {
+              setSelectedBatchChat({ id, name });
+              setCurrentScreen('BatchChat');
+            }} 
+          />
+        );
       default:
         return (
           <DashboardScreen 
@@ -154,7 +176,7 @@ const App = () => {
       </View>
       {isAuthenticated && currentScreen === 'Main' && (
         <TabBar
-          tabs={['Dashboard', 'Batches', 'Students', 'Profile']}
+          tabs={['Dashboard', 'Batches', 'Students', 'Chat', 'Profile']}
           activeTab={activeTab}
           onChangeTab={(tab) => setActiveTab(tab as TabName)}
         />
