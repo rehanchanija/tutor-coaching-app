@@ -12,6 +12,7 @@ import {
   Keyboard,
   Pressable,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -96,6 +97,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
   >('start');
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [showYearSelector, setShowYearSelector] = useState(false);
   const months = [
     'Jan',
     'Feb',
@@ -227,7 +229,6 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
           showsVerticalScrollIndicator={false}
         />
 
-        {/* Create Batch Modal */}
         <Modal
           visible={isModalVisible}
           transparent={true}
@@ -371,11 +372,10 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
           </View>
         </Modal>
 
-        {/* DATE PICKER MODAL */}
         <Modal
           visible={showCalendar}
           transparent
-          animationType="slide"
+          animationType="fade"
           onRequestClose={() => setShowCalendar(false)}
         >
           <View style={styles.pickerOverlay}>
@@ -390,111 +390,170 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
                 style={styles.calendarWrapper}
                 showsVerticalScrollIndicator={false}
               >
-                <View style={styles.monthYearSelector}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      setCalendarMonth(
-                        calendarMonth === 0 ? 11 : calendarMonth - 1,
-                      )
-                    }
-                  >
-                    <ChevronRight
-                      style={{ transform: [{ rotate: '180deg' }] }}
-                      size={24}
-                      color={colors.primary}
-                      strokeWidth={2.5}
-                    />
-                  </TouchableOpacity>
-                  <Text style={styles.monthYearText}>
-                    {new Date(calendarYear, calendarMonth).toLocaleString(
-                      'default',
-                      { month: 'long', year: 'numeric' },
-                    )}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() =>
-                      setCalendarMonth(
-                        calendarMonth === 11 ? 0 : calendarMonth + 1,
-                      )
-                    }
-                  >
-                    <ChevronRight
-                      size={24}
-                      color={colors.primary}
-                      strokeWidth={2.5}
-                    />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.daysHeader}>
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                    day => (
-                      <Text key={day} style={styles.dayHeaderText}>
-                        {day}
-                      </Text>
-                    ),
-                  )}
-                </View>
-                <View style={styles.calendarGrid}>
-                  {(() => {
-                    const firstDay = new Date(
-                      calendarYear,
-                      calendarMonth,
-                      1,
-                    ).getDay();
-                    const daysInMonth = new Date(
-                      calendarYear,
-                      calendarMonth + 1,
-                      0,
-                    ).getDate();
-                    const days = [];
-                    for (let i = 0; i < firstDay; i++) days.push(null);
-                    for (let i = 1; i <= daysInMonth; i++) days.push(i);
-                    return days.map((day, index) => {
-                      const isToday =
-                        day === new Date().getDate() &&
-                        calendarMonth === new Date().getMonth() &&
-                        calendarYear === new Date().getFullYear();
-                      const d = String(day).padStart(2, '0');
-                      const m = String(calendarMonth + 1).padStart(2, '0');
-                      const formatted = `${d}/${m}/${calendarYear}`;
-                      const isSelected =
-                        (activeDateField === 'start'
-                          ? startDate
-                          : completionDate) === formatted;
-
-                      return (
-                        <TouchableOpacity
-                          key={index}
-                          style={[
-                            styles.calendarDay,
-                            !day && styles.emptyDay,
-                            isSelected && styles.selectedDay,
-                          ]}
-                          disabled={!day}
-                          onPress={() => {
-                            if (day) {
-                              if (activeDateField === 'start')
-                                setStartDate(formatted);
-                              else setCompletionDate(formatted);
-                              setShowCalendar(false);
-                            }
-                          }}
-                        >
-                          <Text
+                {showYearSelector ? (
+                  <View style={styles.yearSelectorContainer}>
+                    <View style={styles.yearGrid}>
+                      {Array.from({ length: 11 }, (_, i) => 2020 + i).map(
+                        year => (
+                          <TouchableOpacity
+                            key={year}
                             style={[
-                              styles.calendarDayText,
-                              !day && styles.emptyDayText,
-                              isSelected && styles.selectedDayText,
-                              isToday && !isSelected && styles.todayText,
+                              styles.yearItem,
+                              year === calendarYear && styles.selectedYearItem,
                             ]}
+                            onPress={() => {
+                              setCalendarYear(year);
+                              setShowYearSelector(false);
+                            }}
                           >
+                            <Text
+                              style={[
+                                styles.yearItemText,
+                                year === calendarYear && styles.selectedYearText,
+                              ]}
+                            >
+                              {year}
+                            </Text>
+                          </TouchableOpacity>
+                        ),
+                      )}
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <View style={styles.monthYearSelector}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          setCalendarMonth(
+                            calendarMonth === 0 ? 11 : calendarMonth - 1,
+                          )
+                        }
+                      >
+                        <ChevronRight
+                          style={{ transform: [{ rotate: '180deg' }] }}
+                          size={24}
+                          color={colors.primary}
+                          strokeWidth={2.5}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.yearDropdownTrigger}
+                        onPress={() => setShowYearSelector(true)}
+                      >
+                        <Text style={styles.monthYearText}>
+                          {months[calendarMonth]} {calendarYear}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() =>
+                          setCalendarMonth(
+                            calendarMonth === 11 ? 0 : calendarMonth + 1,
+                          )
+                        }
+                      >
+                        <ChevronRight
+                          size={24}
+                          color={colors.primary}
+                          strokeWidth={2.5}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.daysHeader}>
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                        day => (
+                          <Text key={day} style={styles.dayHeaderText}>
                             {day}
                           </Text>
-                        </TouchableOpacity>
-                      );
-                    });
-                  })()}
-                </View>
+                        ),
+                      )}
+                    </View>
+                    <View style={styles.calendarGrid}>
+                      {(() => {
+                        const firstDay = new Date(
+                          calendarYear,
+                          calendarMonth,
+                          1,
+                        ).getDay();
+                        const daysInMonth = new Date(
+                          calendarYear,
+                          calendarMonth + 1,
+                          0,
+                        ).getDate();
+                        const days = [];
+                        for (let i = 0; i < firstDay; i++) days.push(null);
+                        for (let i = 1; i <= daysInMonth; i++) days.push(i);
+                        return days.map((day, index) => {
+                          const isToday =
+                            day === new Date().getDate() &&
+                            calendarMonth === new Date().getMonth() &&
+                            calendarYear === new Date().getFullYear();
+                          const d = String(day).padStart(2, '0');
+                          const m = String(calendarMonth + 1).padStart(2, '0');
+                          const formatted = `${d}/${m}/${calendarYear}`;
+                          const isSelected =
+                            (activeDateField === 'start'
+                              ? startDate
+                              : completionDate) === formatted;
+
+                          return (
+                            <TouchableOpacity
+                              key={index}
+                              style={[
+                                styles.calendarDay,
+                                !day && styles.emptyDay,
+                                isSelected && styles.selectedDay,
+                              ]}
+                              disabled={!day}
+                              onPress={() => {
+                                if (day) {
+                                  const selectedDate = new Date(
+                                    calendarYear,
+                                    calendarMonth,
+                                    day,
+                                  );
+
+                                  if (
+                                    activeDateField === 'completion' &&
+                                    startDate
+                                  ) {
+                                    const [sd, sm, sy] = startDate
+                                      .split('/')
+                                      .map(Number);
+                                    const startD = new Date(sy, sm - 1, sd);
+
+                                    if (selectedDate < startD) {
+                                      Alert.alert(
+                                        'Invalid Date',
+                                        'Completion date cannot be before Start date!',
+                                      );
+                                      return;
+                                    }
+                                  }
+
+                                  if (activeDateField === 'start')
+                                    setStartDate(formatted);
+                                  else setCompletionDate(formatted);
+                                  setShowCalendar(false);
+                                }
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.calendarDayText,
+                                  !day && styles.emptyDayText,
+                                  isSelected && styles.selectedDayText,
+                                  isToday && !isSelected && styles.todayText,
+                                ]}
+                              >
+                                {day}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        });
+                      })()}
+                    </View>
+                  </>
+                )}
               </ScrollView>
               <Button
                 title="Close"
@@ -733,15 +792,22 @@ const styles = StyleSheet.create({
   pickerOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   pickerContent: {
+    width: '100%',
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 24,
     paddingTop: 16,
     paddingBottom: 20,
-    maxHeight: '80%',
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 20,
   },
   pickerHeader: {
     flexDirection: 'row',
@@ -786,6 +852,46 @@ const styles = StyleSheet.create({
   calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  yearDropdownTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 12,
+  },
+  yearSelectorContainer: {
+    height: 300,
+    paddingHorizontal: 8,
+  },
+  yearGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingBottom: 20,
+  },
+  yearItem: {
+    width: '30%',
+    paddingVertical: 12,
+    margin: 4,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  selectedYearItem: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  yearItemText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  selectedYearText: {
+    color: '#FFF',
   },
   calendarDay: {
     width: '14.28%',
