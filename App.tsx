@@ -8,10 +8,12 @@ import { SubjectScreen } from './src/screens/SubjectScreen';
 import { CourseScreen } from './src/screens/CourseScreen';
 import { StudentsScreen } from './src/screens/StudentsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { StudentDetailScreen } from './src/screens/StudentDetailScreen';
+import { CreateBatchScreen } from './src/screens/CreateBatchScreen';
 import { TabBar } from './src/components/TabBar';
 import { colors } from './src/theme/Theme';
 
-type ScreenName = 'Login' | 'Main' | 'Subject' | 'Course';
+type ScreenName = 'Login' | 'Main' | 'Subject' | 'Course' | 'StudentDetail';
 type TabName = 'Dashboard' | 'Batches' | 'Students' | 'Profile';
 
 const App = () => {
@@ -65,6 +67,15 @@ const App = () => {
         />
       );
     }
+    
+    if (currentScreen === 'StudentDetail') {
+      return (
+        <StudentDetailScreen 
+          studentId="1" // Mock for now
+          onBack={() => setCurrentScreen('Main')} 
+        />
+      );
+    }
 
     // Main screen with Tabs
     switch (activeTab) {
@@ -73,7 +84,7 @@ const App = () => {
       case 'Batches':
         return <BatchScreen onNavigateSubject={handleNavigateBatch} />;
       case 'Students':
-        return <StudentsScreen />;
+        return <StudentsScreen onNavigateStudent={(id) => setCurrentScreen('StudentDetail')} />;
       case 'Profile':
         return <ProfileScreen onLogout={handleLogout} />;
       default:

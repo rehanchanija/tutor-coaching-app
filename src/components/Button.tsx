@@ -55,7 +55,7 @@ export const Button: React.FC<ButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     height: 56,
-    borderRadius: radius.xl,
+    borderRadius: radius.l,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.l,
@@ -63,12 +63,22 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   secondary: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.secondary,
+    shadowColor: colors.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   outline: {
-    backgroundColor: 'transparent',
+    backgroundColor: colors.card,
     borderWidth: 2,
     borderColor: colors.primary,
   },
@@ -77,12 +87,15 @@ const styles = StyleSheet.create({
   },
   textPrimary: {
     color: colors.white,
+    letterSpacing: 0.5,
   },
   textSecondary: {
-    color: colors.primary,
+    color: colors.text,
+    letterSpacing: 0.5,
   },
   textOutline: {
     color: colors.primary,
+    letterSpacing: 0.5,
   },
   textDisabled: {
     color: colors.textLight,

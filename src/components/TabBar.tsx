@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LayoutDashboard, Library, Users, UserCircle } from 'lucide-react-native';
-import { colors, spacing, typography } from '../theme/Theme';
+import { Home, Package, Users, User } from 'lucide-react-native';
+import { colors, radius, spacing } from '../theme/Theme';
 
 interface TabBarProps {
   tabs: string[];
@@ -10,46 +10,58 @@ interface TabBarProps {
   onChangeTab: (tab: string) => void;
 }
 
-const getTabIcon = (tabName: string, color: string, size: number) => {
+const getTabIcon = (tabName: string, isActive: boolean, size: number) => {
+  const iconColor = isActive ? '#4F46E5' : '#94A3B8'; // Purple if active, Slate 400 if not
+  
+  // To closely match the requested visual design:
   switch (tabName) {
     case 'Dashboard':
-      return <LayoutDashboard color={color} size={size} />;
+    case 'Home':
+      return <Home color={isActive ? '#EA580C' : '#94A3B8'} size={size} strokeWidth={2.5} />; // Orange-ish home
     case 'Batches':
-      return <Library color={color} size={size} />;
+    case 'Batch':
+      return <Package color={isActive ? '#B45309' : '#94A3B8'} size={size} strokeWidth={2.5} /> ; // Brown package
     case 'Students':
-      return <Users color={color} size={size} />;
+      return <Users color={iconColor} size={size} strokeWidth={2.5} />;
     case 'Profile':
-      return <UserCircle color={color} size={size} />;
+      return <User color={iconColor} size={size} strokeWidth={2.5} />;
     default:
-      return <LayoutDashboard color={color} size={size} />;
+      return <Home color={iconColor} size={size} strokeWidth={2.5} />;
   }
 };
 
 export const TabBar: React.FC<TabBarProps> = ({ tabs, activeTab, onChangeTab }) => {
+  // Map standard tabs to the requested display labels
+  const tabDisplayNames: Record<string, string> = {
+    'Dashboard': 'Home',
+    'Batches': 'Batch',
+    'Students': 'Students',
+    'Profile': 'Profile'
+  };
+
   return (
     <SafeAreaView edges={['bottom', 'left', 'right']} style={styles.safeArea}>
       <View style={styles.container}>
         {tabs.map((tab) => {
           const isActive = activeTab === tab;
-          const color = isActive ? colors.primary : colors.textLight;
+          const displayLabel = tabDisplayNames[tab] || tab;
+          
           return (
             <TouchableOpacity
               key={tab}
               style={styles.tab}
               onPress={() => onChangeTab(tab)}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
-              <View style={styles.iconContainer}>
-                {getTabIcon(tab, color, 24)}
+              <View style={[styles.iconWrapper, isActive && styles.iconActiveBg]}>
+                {getTabIcon(tab, isActive, 22)}
               </View>
               <Text style={[
-                typography.caption,
                 styles.tabText,
                 isActive && styles.activeTabText
               ]}>
-                {tab}
+                {displayLabel}
               </Text>
-              {isActive && <View style={styles.activeIndicator} />}
             </TouchableOpacity>
           );
         })}
@@ -60,38 +72,36 @@ export const TabBar: React.FC<TabBarProps> = ({ tabs, activeTab, onChangeTab }) 
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: colors.card,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: '#F1F5F9', // subtle border top matches the app list
   },
   container: {
     flexDirection: 'row',
-    height: 65,
+    height: 70,
   },
   tab: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
+    paddingTop: 8,
   },
-  iconContainer: {
+  iconWrapper: {
+    padding: 8,
+    borderRadius: 14,
     marginBottom: 4,
+    // Add light purple bg to the active tab icon just like the screenshot
+  },
+  iconActiveBg: {
+    backgroundColor: '#EEF2FF', 
   },
   tabText: {
-    fontWeight: '600',
-    color: colors.textLight,
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#94A3B8',
+    letterSpacing: -0.2,
   },
   activeTabText: {
-    color: colors.primary,
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: -1,
-    width: 32,
-    height: 3,
-    backgroundColor: colors.primary,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
+    color: '#4F46E5', // Matches the active tab purple text from screenshot
   },
 });

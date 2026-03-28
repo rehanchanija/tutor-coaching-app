@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Users, Layers, Sun, Moon, ChevronRight } from 'lucide-react-native';
+import {
+  Users,
+  LibraryBig,
+  Sun,
+  Moon,
+  ChevronRight,
+  GraduationCap,
+} from 'lucide-react-native';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
 import { colors, radius, spacing, typography } from '../theme/Theme';
@@ -17,33 +30,46 @@ const mockBatches = [
   { id: '4', name: 'Node.js Backend', type: 'Evening', progress: 90, students: 22 },
 ];
 
-export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateBatch }) => {
+export const DashboardScreen: React.FC<DashboardScreenProps> = ({
+  onNavigateBatch,
+}) => {
   const [filter, setFilter] = useState<'Morning' | 'Evening'>('Morning');
-  
-  const filteredBatches = mockBatches.filter(b => b.type === filter);
-  const totalStudents = mockBatches.reduce((acc, curr) => acc + curr.students, 0);
 
-  const renderBatch = ({ item }: { item: typeof mockBatches[0] }) => (
+  const filteredBatches = mockBatches.filter(b => b.type === filter);
+  const totalStudents = mockBatches.reduce(
+    (acc, curr) => acc + curr.students,
+    0,
+  );
+
+  const renderBatch = ({ item }: { item: (typeof mockBatches)[0] }) => (
     <Card onPress={() => onNavigateBatch(item.id)} style={styles.batchCard}>
       <View style={styles.batchHeader}>
         <View style={styles.batchTitleRow}>
           <View style={styles.iconCircle}>
-            <Layers color={colors.primary} size={20} />
+            <LibraryBig color={colors.primary} size={20} strokeWidth={2.5} />
           </View>
-          <Text style={[typography.h3, styles.batchTitle]}>{item.name}</Text>
+          <Text style={[typography.h3, styles.batchTitle]} numberOfLines={1}>
+            {item.name}
+          </Text>
         </View>
-        <ChevronRight color={colors.textLight} size={20} />
+        <ChevronRight color={colors.textLight} size={22} strokeWidth={2.5} />
       </View>
-      
+
       <View style={styles.batchDetailsRow}>
         <View style={styles.studentsCount}>
-          <Users color={colors.textLight} size={14} />
+          <Users color={colors.secondary} size={16} strokeWidth={2.5} />
           <Text style={styles.studentsText}>{item.students} Students</Text>
         </View>
-        <Text style={[typography.caption, styles.progressText]}>{item.progress}%</Text>
+        <Text style={[typography.caption, styles.progressText]}>
+          {item.progress}%
+        </Text>
       </View>
-      
-      <ProgressBar progress={item.progress} />
+
+      <ProgressBar
+        progress={item.progress}
+        color={colors.secondary}
+        height={6}
+      />
     </Card>
   );
 
@@ -52,8 +78,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateBatc
       <View style={styles.container}>
         <View style={styles.header}>
           <View>
-            <Text style={typography.bodySmall}>Hello,</Text>
-            <Text style={typography.h1}>John Doe</Text>
+            <Text style={[typography.body, { color: colors.textLight }]}>
+              Hello,
+            </Text>
+            <Text style={[typography.h1, { color: colors.primary }]}>
+              John Doe
+            </Text>
           </View>
           <View style={styles.profileBadge}>
             <Text style={styles.profileInitial}>J</Text>
@@ -62,27 +92,72 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateBatc
 
         <Card style={styles.summaryCard}>
           <View style={styles.summaryIconContainer}>
-            <Users color={colors.white} size={28} />
+            <GraduationCap color={colors.white} size={32} strokeWidth={2} />
           </View>
           <View>
-            <Text style={[typography.body, styles.summaryText]}>Total Active Students</Text>
-            <Text style={[typography.h1, styles.summaryValue]}>{totalStudents}</Text>
+            <Text style={[typography.body, styles.summaryText]}>
+              Total Active Students
+            </Text>
+            <Text style={[typography.h1, styles.summaryValue]}>
+              {totalStudents.toLocaleString()}
+            </Text>
           </View>
         </Card>
 
-        <View style={styles.tabs}>
-          <Text
-            style={[styles.tabText, filter === 'Morning' && styles.activeTab]}
-            onPress={() => setFilter('Morning')}
-          >
-            Morning <Sun size={14} color={filter === 'Morning' ? colors.primary : colors.textLight} style={{marginLeft: 4, position: 'relative', top: 2}} />
+        <View style={styles.tabsContainer}>
+          <Text style={[typography.h2, { marginBottom: spacing.m }]}>
+            My Batches
           </Text>
-          <Text
-            style={[styles.tabText, filter === 'Evening' && styles.activeTab]}
-            onPress={() => setFilter('Evening')}
-          >
-            Evening <Moon size={14} color={filter === 'Evening' ? colors.primary : colors.textLight} style={{marginLeft: 4, position: 'relative', top: 2}}/>
-          </Text>
+          <View style={styles.toggleFilters}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={[
+                styles.filterBtn,
+                filter === 'Morning' && styles.activeFilterBtn,
+              ]}
+              onPress={() => setFilter('Morning')}
+            >
+              <Sun
+                size={16}
+                color={filter === 'Morning' ? colors.white : colors.textLight}
+                strokeWidth={2.5}
+              />
+              <Text
+                style={[
+                  styles.filterText,
+                  filter === 'Morning' && styles.activeFilterText,
+                ]}
+              >
+                {' '}
+                Morning
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={[
+                styles.filterBtn,
+                filter === 'Evening' && styles.activeFilterBtn,
+                { marginLeft: spacing.m },
+              ]}
+              onPress={() => setFilter('Evening')}
+            >
+              <Moon
+                size={16}
+                color={filter === 'Evening' ? colors.white : colors.textLight}
+                strokeWidth={2.5}
+              />
+              <Text
+                style={[
+                  styles.filterText,
+                  filter === 'Evening' && styles.activeFilterText,
+                ]}
+              >
+                {' '}
+                Evening
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <FlatList
@@ -105,7 +180,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing.l,
-    paddingTop: spacing.l,
+    paddingTop: spacing.m,
   },
   header: {
     flexDirection: 'row',
@@ -114,17 +189,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.l,
   },
   profileBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primaryLight,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: colors.secondaryLight,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.secondary,
   },
   profileInitial: {
-    color: colors.primary,
-    fontSize: 18,
-    fontWeight: '700',
+    color: colors.secondary,
+    fontSize: 20,
+    fontWeight: '800',
   },
   summaryCard: {
     backgroundColor: colors.primary,
@@ -134,12 +211,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.l,
     marginBottom: spacing.xl,
     borderRadius: radius.l,
+    borderWidth: 0,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
   },
   summaryIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.m,
@@ -147,29 +230,42 @@ const styles = StyleSheet.create({
   summaryText: {
     color: colors.primaryLight,
     fontSize: 14,
+    opacity: 0.9,
   },
   summaryValue: {
     color: colors.white,
-    marginTop: spacing.xs,
-    fontSize: 32,
-    lineHeight: 36,
+    marginTop: spacing.xs - 2,
+    fontSize: 34,
+    lineHeight: 38,
   },
-  tabs: {
+  tabsContainer: {
+    marginBottom: spacing.m,
+  },
+  toggleFilters: {
     flexDirection: 'row',
-    marginBottom: spacing.l,
   },
-  tabText: {
-    ...typography.h3,
-    color: colors.textLight,
-    marginRight: spacing.xl,
-    paddingBottom: spacing.s,
+  filterBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: colors.white,
+    borderRadius: radius.m,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  activeTab: {
-    color: colors.primary,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
+  activeFilterBtn: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  filterText: {
+    ...typography.h3,
+    fontSize: 15,
+    color: colors.textLight,
+  },
+  activeFilterText: {
+    color: colors.white,
   },
   listContent: {
     paddingBottom: spacing.xxl,
@@ -177,6 +273,7 @@ const styles = StyleSheet.create({
   batchCard: {
     marginBottom: spacing.m,
     padding: spacing.m,
+    borderRadius: radius.l,
   },
   batchHeader: {
     flexDirection: 'row',
@@ -186,37 +283,45 @@ const styles = StyleSheet.create({
   batchTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: radius.m,
     backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.s,
+    marginRight: spacing.m,
   },
   batchTitle: {
-    fontSize: 16,
+    fontSize: 17,
+    flexShrink: 1,
   },
   batchDetailsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: spacing.m,
+    marginTop: spacing.l,
     marginBottom: spacing.s,
   },
   studentsCount: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.secondaryLight,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   studentsText: {
     ...typography.caption,
-    marginLeft: spacing.xs,
-    fontWeight: '500',
+    marginLeft: 6,
+    fontWeight: '700',
+    color: colors.secondary,
   },
   progressText: {
-    fontWeight: '600',
+    fontWeight: '800',
     color: colors.primary,
+    fontSize: 14,
   },
 });

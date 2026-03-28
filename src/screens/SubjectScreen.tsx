@@ -1,9 +1,30 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BookOpen, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react-native';
+import {
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  ListMinus,
+  LayoutGrid,
+  Users,
+  Calendar,
+  Plus,
+  X,
+  Book,
+} from 'lucide-react-native';
+import { Modal, Pressable, Keyboard, Platform, KeyboardAvoidingView } from 'react-native';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
+import { Input } from '../components/Input';
+import { Button } from '../components/Button';
 import { colors, radius, spacing, typography } from '../theme/Theme';
 
 interface SubjectScreenProps {
@@ -12,123 +33,481 @@ interface SubjectScreenProps {
 }
 
 const mockSubjects = [
-  { id: 's1', name: 'Introduction to Components', progress: 100 },
-  { id: 's2', name: 'State and Props', progress: 80 },
-  { id: 's3', name: 'Navigation', progress: 40 },
-  { id: 's4', name: 'API Integration', progress: 0 },
+  {
+    id: 's1',
+    name: 'Mathematics',
+    topics: 'Algebra, Calculus, Geometry...',
+    chapters: 6,
+    progress: 75,
+  },
+  {
+    id: 's2',
+    name: 'Physics',
+    topics: 'Mechanics, Optics, Electrostatics',
+    chapters: 5,
+    progress: 60,
+  },
+  {
+    id: 's3',
+    name: 'Chemistry',
+    topics: 'Organic, Inorganic, Physical',
+    chapters: 4,
+    progress: 35,
+  },
 ];
 
-export const SubjectScreen: React.FC<SubjectScreenProps> = ({ onBack, onNavigateCourse }) => {
-  const renderSubject = ({ item }: { item: typeof mockSubjects[0] }) => (
+const mockStudents = [
+  {
+    id: '1',
+    name: 'Aarav Sharma',
+    roll: '01',
+    status: 'Active',
+    initials: 'AS',
+  },
+  { id: '2', name: 'Isha Patel', roll: '02', status: 'Active', initials: 'IP' },
+  {
+    id: '3',
+    name: 'Kabir Singh',
+    roll: '03',
+    status: 'Fee Due',
+    initials: 'KS',
+  },
+];
+
+export const SubjectScreen: React.FC<SubjectScreenProps> = ({
+  onBack,
+  onNavigateCourse,
+}) => {
+  const [modalVisible, setModalVisible] = React.useState(false);
+  const [subjectName, setSubjectName] = React.useState('');
+  const [topics, setTopics] = React.useState('');
+  const [chapters, setChapters] = React.useState('');
+
+  const [activeTab, setActiveTab] = React.useState<'Subjects' | 'Students'>(
+    'Subjects',
+  );
+
+  const handleCreateSubject = () => {
+    // Logic to add subject would go here
+    setModalVisible(false);
+    setSubjectName('');
+    setTopics('');
+    setChapters('');
+  };
+
+  const renderSubject = ({ item }: { item: (typeof mockSubjects)[0] }) => (
     <Card onPress={() => onNavigateCourse(item.id)} style={styles.subjectCard}>
-      <View style={styles.topRow}>
-        <View style={styles.iconCircle}>
-          {item.progress === 100 ? (
-            <CheckCircle2 color={colors.success} size={20} />
-          ) : (
-            <BookOpen color={colors.primary} size={20} />
-          )}
-        </View>
-        <Text style={[typography.h3, styles.subjectName, item.progress === 100 && { color: colors.success }]}>
-          {item.name}
-        </Text>
-        <ChevronRight color={colors.textLight} size={20} />
-      </View>
-      <View style={styles.progressSection}>
-        <View style={styles.progressTextContainer}>
-          <Text style={typography.caption}>Completion</Text>
-          <Text style={[typography.caption, item.progress === 100 && { color: colors.success }]}>
-            {item.progress}%
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{item.name}</Text>
+        <View
+          style={[
+            styles.chapterBadge,
+            item.name === 'Chemistry'
+              ? { backgroundColor: '#FEF3C7' }
+              : { backgroundColor: '#EEF2FF' },
+          ]}
+        >
+          <Text
+            style={[
+              styles.chapterText,
+              item.name === 'Chemistry'
+                ? { color: '#B45309' }
+                : { color: '#4F46E5' },
+            ]}
+          >
+            {item.chapters} Chapters
           </Text>
         </View>
-        <ProgressBar progress={item.progress} color={item.progress === 100 ? colors.success : colors.primary} />
+      </View>
+
+      <Text style={styles.topicsText} numberOfLines={1}>
+        {item.topics}
+      </Text>
+
+      <View style={styles.progressRow}>
+         <View style={{ flex: 1 }}>
+           <ProgressBar 
+             progress={item.progress} 
+             color={item.name === 'Chemistry' ? '#F59E0B' : '#4F46E5'} 
+             height={6} 
+           />
+         </View>
+         <Text style={styles.progressPercentText}>{item.progress}%</Text>
       </View>
     </Card>
   );
 
+  const renderStudent = ({ item }: { item: (typeof mockStudents)[0] }) => (
+    <View style={styles.studentItem}>
+      <View style={styles.studentAvatar}>
+        <Text style={styles.studentInitials}>{item.initials}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.studentName}>{item.name}</Text>
+        <Text style={styles.studentRoll}>Roll No. {item.roll}</Text>
+      </View>
+      <View
+        style={[
+          styles.statusBadge,
+          { backgroundColor: item.status === 'Active' ? '#D1FAE5' : '#FEF3C7' },
+        ]}
+      >
+        <Text
+          style={[
+            styles.statusText,
+            { color: item.status === 'Active' ? '#059669' : '#B45309' },
+          ]}
+        >
+          {item.status}
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
-            <ChevronLeft color={colors.text} size={24} />
+    <View style={styles.container}>
+      {/* Purple Header Stats Section */}
+      <View style={styles.headerSection}>
+        <SafeAreaView edges={['top', 'left', 'right']}>
+          <View style={styles.topNav}>
+            <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+              <ChevronLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>JEE Mains — A</Text>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.plusIconButton}>
+              <Plus color="#FFFFFF" size={24} strokeWidth={2.5} />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+
+      {/* Create Subject Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable 
+            style={StyleSheet.absoluteFill} 
+            onPress={() => {
+              Keyboard.dismiss();
+              setModalVisible(false);
+            }} 
+          />
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.keyboardAvoidingView}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add New Subject</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+                  <X color="#94A3B8" size={22} strokeWidth={2.5} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modalBody}>
+                <Input
+                  label="Subject Name"
+                  placeholder="e.g. Mathematics"
+                  value={subjectName}
+                  onChangeText={setSubjectName}
+                  autoFocus
+                />
+                <Input
+                  label="Topics Overview"
+                  placeholder="e.g. Algebra, Calculus"
+                  value={topics}
+                  onChangeText={setTopics}
+                />
+                <Input
+                  label="Total Chapters"
+                  placeholder="6"
+                  value={chapters}
+                  onChangeText={setChapters}
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <Button
+                title="Create Subject"
+                onPress={handleCreateSubject}
+                disabled={subjectName.trim() === ''}
+                style={styles.modalActionBtn}
+              />
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      <View style={styles.content}>
+        {/* Toggle Tab Bar */}
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'Subjects' && styles.activeTab]}
+            onPress={() => setActiveTab('Subjects')}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'Subjects' && styles.activeTabText,
+              ]}
+            >
+              Subjects
+            </Text>
           </TouchableOpacity>
-          <Text style={[typography.h2, styles.title]}>Subjects</Text>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'Students' && styles.activeTab]}
+            onPress={() => setActiveTab('Students')}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'Students' && styles.activeTabText,
+              ]}
+            >
+              Students
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <FlatList
-          data={mockSubjects}
-          keyExtractor={item => item.id}
-          renderItem={renderSubject}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        {activeTab === 'Subjects' && (
+          <FlatList
+            data={mockSubjects}
+            renderItem={renderSubject}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+
+        {activeTab === 'Students' && (
+          <FlatList
+            data={mockStudents}
+            renderItem={renderStudent}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   container: {
     flex: 1,
-    paddingHorizontal: spacing.l,
-    paddingTop: spacing.s,
+    backgroundColor: '#FFFFFF',
   },
-  header: {
+  headerSection: {
+    backgroundColor: '#4F46E5', // Indigo 600
+    paddingBottom: 10,
+  },
+  topNav: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xl,
-    paddingTop: spacing.s,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    marginBottom: 8,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.s,
-    borderWidth: 1,
-    borderColor: colors.border,
+  backBtn: {
+    marginRight: 12,
   },
-  title: {
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  plusIconButton: {
+    padding: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    alignItems: 'flex-start',
+  },
+  statValue: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  statLabel: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 14,
+    fontWeight: '700',
+    paddingVertical: 4,
+  },
+  content: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingTop: 20,
   },
-  listContent: {
-    paddingBottom: spacing.xxl,
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    marginHorizontal: 16,
+    borderRadius: 99,
+    padding: 4,
+    marginBottom: 24,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 99,
+  },
+  activeTab: {
+    backgroundColor: '#4F46E5',
+  },
+  tabText: {
+    color: '#64748B',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  activeTabText: {
+    color: '#FFFFFF',
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 40,
   },
   subjectCard: {
-    marginBottom: spacing.m,
+    padding: 20,
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#F1F5F9', // Exact shadow-free border from ref
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.round,
-    backgroundColor: colors.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.s,
-  },
-  subjectName: {
-    flex: 1,
-    paddingRight: spacing.s,
-  },
-  progressSection: {
-    width: '100%',
-    paddingLeft: 44, 
-  },
-  progressTextContainer: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.xs,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  chapterBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  chapterText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  topicsText: {
+    fontSize: 15,
+    color: '#94A3B8',
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  progressPercentText: {
+    marginLeft: 12,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  studentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    marginBottom: 8,
+  },
+  studentAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  studentInitials: {
+    color: '#3B82F6',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  studentName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  studentRoll: {
+    fontSize: 13,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  keyboardAvoidingView: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  modalBody: {
+    marginBottom: 24,
+  },
+  modalActionBtn: {
+    borderRadius: 16,
+    height: 54,
   },
 });

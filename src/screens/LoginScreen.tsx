@@ -18,12 +18,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
-              <LogIn color={colors.primary} size={48} strokeWidth={1.5} />
+              <LogIn color={colors.primary} size={42} strokeWidth={2.5} />
             </View>
             <Text style={[typography.h1, styles.title]}>Welcome Back</Text>
             <Text style={[typography.body, styles.subtitle]}>Sign in to manage your students and batches</Text>
@@ -37,7 +37,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              icon={<Mail color={colors.textLight} size={20} />}
+              icon={<Mail color={colors.textLight} size={20} strokeWidth={2} />}
             />
             <Input
               label="Password"
@@ -45,7 +45,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              icon={<Lock color={colors.textLight} size={20} />}
+              icon={<Lock color={colors.textLight} size={20} strokeWidth={2} />}
             />
           </View>
 
@@ -80,30 +80,34 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: 24,
     backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.l,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
   },
   title: {
     marginBottom: spacing.xs,
     textAlign: 'center',
+    color: colors.primary, // giving it that brand hero feel
   },
   subtitle: {
     color: colors.textLight,
     textAlign: 'center',
     paddingHorizontal: spacing.l,
+    lineHeight: 22,
   },
   form: {
     marginBottom: spacing.xl,
   },
   loginButton: {
     marginTop: spacing.s,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   },
 });
