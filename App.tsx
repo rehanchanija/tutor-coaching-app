@@ -10,10 +10,14 @@ import { StudentsScreen } from './src/screens/StudentsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { StudentDetailScreen } from './src/screens/StudentDetailScreen';
 import { CreateBatchScreen } from './src/screens/CreateBatchScreen';
+import { NotificationScreen } from './src/screens/NotificationScreen';
+import { SupportScreen } from './src/screens/SupportScreen';
+import { PrivacyPolicyScreen } from './src/screens/PrivacyPolicyScreen';
+import { ChatSupportScreen } from './src/screens/ChatSupportScreen';
 import { TabBar } from './src/components/TabBar';
 import { colors } from './src/theme/Theme';
 
-type ScreenName = 'Login' | 'Main' | 'Subject' | 'Course' | 'StudentDetail';
+type ScreenName = 'Login' | 'Main' | 'Subject' | 'Course' | 'StudentDetail' | 'Notifications' | 'Support' | 'Privacy' | 'ChatSupport';
 type TabName = 'Dashboard' | 'Batches' | 'Students' | 'Profile';
 
 const App = () => {
@@ -77,18 +81,67 @@ const App = () => {
       );
     }
 
+    if (currentScreen === 'Notifications') {
+      return (
+        <NotificationScreen 
+          onBack={() => setCurrentScreen('Main')} 
+        />
+      );
+    }
+
+    if (currentScreen === 'Support') {
+      return (
+        <SupportScreen 
+          onBack={() => setCurrentScreen('Main')} 
+          onNavigateChat={() => setCurrentScreen('ChatSupport')}
+        />
+      );
+    }
+
+    if (currentScreen === 'ChatSupport') {
+      return (
+        <ChatSupportScreen 
+          onBack={() => setCurrentScreen('Support')} 
+        />
+      );
+    }
+
+    if (currentScreen === 'Privacy') {
+      return (
+        <PrivacyPolicyScreen 
+          onBack={() => setCurrentScreen('Main')} 
+        />
+      );
+    }
+
     // Main screen with Tabs
     switch (activeTab) {
       case 'Dashboard':
-        return <DashboardScreen onNavigateBatch={handleNavigateBatch} />;
+        return (
+          <DashboardScreen 
+            onNavigateBatch={handleNavigateBatch} 
+            onNavigateNotifications={() => setCurrentScreen('Notifications')}
+          />
+        );
       case 'Batches':
         return <BatchScreen onNavigateSubject={handleNavigateBatch} />;
       case 'Students':
         return <StudentsScreen onNavigateStudent={(id) => setCurrentScreen('StudentDetail')} />;
       case 'Profile':
-        return <ProfileScreen onLogout={handleLogout} />;
+        return (
+          <ProfileScreen 
+            onLogout={handleLogout} 
+            onNavigateSupport={() => setCurrentScreen('Support')}
+            onNavigatePrivacy={() => setCurrentScreen('Privacy')}
+          />
+        );
       default:
-        return <DashboardScreen onNavigateBatch={handleNavigateBatch} />;
+        return (
+          <DashboardScreen 
+            onNavigateBatch={handleNavigateBatch} 
+            onNavigateNotifications={() => setCurrentScreen('Notifications')}
+          />
+        );
     }
   };
 

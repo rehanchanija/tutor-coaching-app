@@ -23,6 +23,7 @@ import { colors, radius, spacing, typography } from '../theme/Theme';
 
 interface DashboardScreenProps {
   onNavigateBatch: (batchId: string) => void;
+  onNavigateNotifications: () => void;
 }
 
 const mockBatches = [
@@ -58,6 +59,7 @@ const mockBatches = [
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateBatch,
+  onNavigateNotifications,
 }) => {
   const [filter, setFilter] = useState<'Morning' | 'Evening'>('Morning');
 
@@ -105,7 +107,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <Text style={styles.greeting}>Good Morning,</Text>
             <Text style={typography.h1}>John Doe</Text>
           </View>
-          <TouchableOpacity style={styles.notifBadge}>
+          <TouchableOpacity 
+            style={styles.notifBadge} 
+            activeOpacity={0.8}
+            onPress={onNavigateNotifications}
+          >
             <Bell color={colors.text} size={24} />
             <View style={styles.notifDot} />
           </TouchableOpacity>

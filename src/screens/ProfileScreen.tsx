@@ -1,231 +1,156 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, Trophy, Users, Target, CalendarDays, Award } from 'lucide-react-native';
+import {
+  LogOut,
+  User,
+  Phone,
+  Mail,
+  Shield,
+  HelpCircle,
+  ChevronRight,
+  Settings,
+  Building,
+  Edit3,
+} from 'lucide-react-native';
 import { Card } from '../components/Card';
-import { ProgressBar } from '../components/ProgressBar';
 import { colors, radius, spacing, typography } from '../theme/Theme';
 
 interface ProfileScreenProps {
   onLogout: () => void;
+  onNavigateSupport: () => void;
+  onNavigatePrivacy: () => void;
 }
 
-export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onLogout }) => {
+export const ProfileScreen: React.FC<ProfileScreenProps> = ({
+  onLogout,
+  onNavigateSupport,
+  onNavigatePrivacy,
+}) => {
+  const adminData = {
+    coachingName: 'SRK Coaching Center',
+    adminName: 'John Doe',
+    phone: '+91 98765 43210',
+    email: 'admin@elitecoaching.com',
+    role: 'Head Admin',
+  };
+
+  const renderOption = (
+    icon: any,
+    label: string,
+    color: string,
+    onPress?: () => void,
+  ) => (
+    <TouchableOpacity style={styles.optionRow} onPress={onPress}>
+      <View style={[styles.optionIconBox, { backgroundColor: color + '15' }]}>
+        {React.createElement(icon, {
+          size: 20,
+          color: color,
+          strokeWidth: 2.5,
+        })}
+      </View>
+      <Text style={styles.optionLabel}>{label}</Text>
+      <ChevronRight size={20} color={colors.textMuted} />
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-      <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.header}>
-          <Text style={[typography.h1, styles.title]}>My Profile</Text>
-          <TouchableOpacity onPress={onLogout} style={styles.logoutIcon} activeOpacity={0.7}>
-            <LogOut color={colors.danger} size={22} strokeWidth={2.5} />
-          </TouchableOpacity>
+          <Text style={typography.h1}>Admin Profile</Text>
         </View>
 
-        <Card style={styles.headerCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>J</Text>
-            <View style={styles.verifiedBadge}>
-              <Award color={colors.white} size={14} strokeWidth={3} />
+        {/* Profile Card with Edit Profile */}
+        <Card style={styles.profileCard}>
+          <View style={styles.profileTopRow}>
+            <View style={styles.avatar}>
+               <Building color={colors.white} size={32} strokeWidth={2} />
+               <View style={styles.editBadge}>
+                  <Edit3 size={12} color={colors.white} strokeWidth={3} />
+               </View>
             </View>
-          </View>
-          <Text style={[typography.h2, styles.name]}>John Doe</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>Senior Tutor</Text>
-          </View>
-        </Card>
-
-        <Text style={[typography.h2, styles.sectionTitle]}>Insights</Text>
-
-        <Card style={styles.statsCard}>
-          <View style={styles.statRow}>
-            <View style={styles.statIconWrapper}>
-              <Trophy size={18} color={colors.primary} strokeWidth={2.5} />
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={styles.coachingLabel}>COACHING NAME</Text>
+              <Text style={styles.coachingNameText}>{adminData.coachingName}</Text>
+              <Text style={styles.adminLabel}>ADMIN NAME</Text>
+              <Text style={styles.adminNameText}>{adminData.adminName}</Text>
             </View>
-            <Text style={[typography.body, styles.statLabel]}>Completed Courses</Text>
-            <Text style={[typography.h2, styles.statValue]}>32</Text>
           </View>
           
+          <TouchableOpacity style={styles.editProfileBtn} activeOpacity={0.8}>
+             <Settings size={18} color={colors.primary} strokeWidth={2.5} />
+             <Text style={styles.editProfileText}>Edit Profile</Text>
+          </TouchableOpacity>
+        </Card>
+
+        {/* Contact Information */}
+        <Text style={styles.sectionLabel}>Contact Details</Text>
+        <Card variant="outline" style={styles.fullCard}>
+          <View style={styles.infoRow}>
+            <View style={styles.infoIconBox}>
+               <Phone size={18} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.infoSmallLabel}>CONTACT NUMBER</Text>
+              <Text style={styles.infoMainText}>{adminData.phone}</Text>
+            </View>
+          </View>
           <View style={styles.divider} />
-          
-          <View style={styles.statRow}>
-            <View style={[styles.statIconWrapper, { backgroundColor: '#F0FDF4' }]}>
-              <Users size={18} color={colors.success} strokeWidth={2.5} />
+          <View style={styles.infoRow}>
+            <View style={styles.infoIconBox}>
+               <Mail size={18} color={colors.primary} />
             </View>
-            <Text style={[typography.body, styles.statLabel]}>Active Students</Text>
-            <Text style={[typography.h2, styles.statValue, { color: colors.success }]}>125</Text>
-          </View>
-
-           <View style={styles.divider} />
-          
-          <View style={styles.statRow}>
-            <View style={[styles.statIconWrapper, { backgroundColor: colors.secondaryLight }]}>
-              <CalendarDays size={18} color={colors.secondary} strokeWidth={2.5} />
+            <View>
+              <Text style={styles.infoSmallLabel}>EMAIL ADDRESS</Text>
+              <Text style={styles.infoMainText}>{adminData.email}</Text>
             </View>
-            <Text style={[typography.body, styles.statLabel]}>Total Watch Hours</Text>
-            <Text style={[typography.h2, styles.statValue, { color: colors.secondary }]}>450+</Text>
           </View>
         </Card>
 
-        <Card style={styles.progressCard}>
-          <View style={styles.progressHeaderRow}>
-            <Target size={20} color={colors.secondary} strokeWidth={2.5} />
-            <Text style={[typography.body, styles.progressTitle]}>Course Completion Rate</Text>
-          </View>
-
-          <View style={styles.progressContainer}>
-            <View style={styles.progressTextContainer}>
-              <Text style={typography.caption}>Average across all batches</Text>
-              <Text style={[typography.caption, { fontWeight: '800', color: colors.primary, fontSize: 14 }]}>68%</Text>
+        {/* Support & Legal */}
+        <Text style={styles.sectionLabel}>Help & Support</Text>
+        <Card variant="outline" style={styles.fullCard}>
+          {renderOption(HelpCircle, 'Contact Support', colors.primary, onNavigateSupport)}
+          {renderOption(Shield, 'Privacy Policy', colors.accent, onNavigatePrivacy)}
+          <View style={styles.divider} />
+          <TouchableOpacity style={styles.optionRow} onPress={onLogout}>
+            <View style={[styles.optionIconBox, { backgroundColor: colors.danger + '15' }]}>
+               <LogOut size={20} color={colors.danger} strokeWidth={2.5} />
             </View>
-            <ProgressBar progress={68} color={colors.success} height={8} />
-          </View>
+            <Text style={[styles.optionLabel, { color: colors.danger }]}>Logout Account</Text>
+          </TouchableOpacity>
         </Card>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: spacing.l,
-    paddingTop: spacing.m,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.l,
-  },
-  title: {
-    marginBottom: 0,
-  },
-  logoutIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FEF2F2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FEE2E2',
-  },
-  headerCard: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.m,
-  },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-    borderWidth: 4,
-    borderColor: colors.primaryLight,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  avatarText: {
-    color: colors.white,
-    fontSize: 42,
-    fontWeight: '800',
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.card,
-  },
-  name: {
-    marginBottom: spacing.xs,
-    fontSize: 24,
-  },
-  roleBadge: {
-    backgroundColor: colors.secondaryLight,
-    paddingHorizontal: spacing.m,
-    paddingVertical: 6,
-    borderRadius: radius.round,
-    marginTop: spacing.xs,
-  },
-  roleText: {
-    color: colors.secondary,
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  sectionTitle: {
-    marginBottom: spacing.m,
-  },
-  statsCard: {
-    marginBottom: spacing.l,
-  },
-  statRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.s,
-  },
-  statIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.m,
-  },
-  statLabel: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  statValue: {
-    color: colors.primary,
-    fontSize: 22,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.s,
-  },
-  progressCard: {
-    paddingVertical: spacing.l,
-  },
-  progressHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  progressTitle: {
-    marginLeft: spacing.s,
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  progressContainer: {
-    width: '100%',
-  },
-  progressTextContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.s,
-  },
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  scrollContent: { paddingHorizontal: spacing.l, paddingBottom: 120 },
+  header: { marginTop: spacing.m, marginBottom: spacing.l },
+  profileCard: { padding: 20 },
+  profileTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  avatar: { width: 70, height: 70, borderRadius: 24, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
+  editBadge: { position: 'absolute', bottom: -4, right: -4, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.accent, borderWidth: 2, borderColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
+  coachingLabel: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 1 },
+  coachingNameText: { fontSize: 18, fontWeight: '900', color: colors.text, marginBottom: 8 },
+  adminLabel: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 1 },
+  adminNameText: { fontSize: 16, fontWeight: '700', color: colors.textLight },
+  editProfileBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 16, backgroundColor: colors.primaryLight, gap: 8 },
+  editProfileText: { fontSize: 14, fontWeight: '800', color: colors.primary },
+  sectionLabel: { fontSize: 12, fontWeight: '800', color: colors.textMuted, marginTop: spacing.l, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 },
+  fullCard: { padding: 4 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 },
+  infoIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center' },
+  infoSmallLabel: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.5 },
+  infoMainText: { fontSize: 15, fontWeight: '700', color: colors.text, marginTop: 2 },
+  divider: { height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 16 },
+  optionRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 },
+  optionIconBox: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  optionLabel: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.text },
 });
