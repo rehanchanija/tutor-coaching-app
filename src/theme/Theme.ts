@@ -1,16 +1,20 @@
 export const colors = {
-  primary: '#1E3A8A', // Deep academic blue
-  primaryLight: '#EFF6FF', // Very light blue for backgrounds
-  secondary: '#F59E0B', // Amber/Yellow for accents/progress
-  secondaryLight: '#FEF3C7',
-  background: '#F8FAFC', // Slate 50 - clean app background
+  primary: '#4693e5', // The user's new favorite Blue
+  primaryLight: '#E0EEFF', // Light version for subtle backgrounds
+  secondary: '#4693e5',
+  secondaryLight: '#E0EEFF',
+  background: '#F8FAFC', // Keep background clean slate or use a light tint
   card: '#FFFFFF',
-  text: '#0F172A', // Slate 900 - almost black
-  textLight: '#64748B', // Slate 500 - elegant gray
-  success: '#10B981', // Emerald 500
-  warning: '#F59E0B',
-  danger: '#EF4444', // Red 500
-  border: '#E2E8F0', // Slate 200
+  text: '#0F172A', // Slate 900
+  textLight: '#94A3B8', // Slate 400
+  textMuted: '#64748B', // Slate 500
+  success: '#059669', // Emerald 600
+  successLight: '#D1FAE5',
+  warning: '#D97706', // Amber 600
+  warningLight: '#FEF3C7',
+  danger: '#DC2626', // Red 600
+  dangerLight: '#FEE2E2',
+  border: '#F1F5F9',
   white: '#FFFFFF',
   black: '#000000',
 };
@@ -33,36 +37,36 @@ export const radius = {
 };
 
 export const typography = {
-  h1: { 
-    fontSize: 28, 
-    fontWeight: '800' as const, 
+  h1: {
+    fontSize: 28,
+    fontWeight: '800' as const,
     color: colors.text,
     letterSpacing: -0.5,
   },
-  h2: { 
-    fontSize: 22, 
-    fontWeight: '700' as const, 
+  h2: {
+    fontSize: 22,
+    fontWeight: '700' as const,
     color: colors.text,
     letterSpacing: -0.3,
   },
-  h3: { 
-    fontSize: 18, 
-    fontWeight: '700' as const, 
+  h3: {
+    fontSize: 18,
+    fontWeight: '700' as const,
     color: colors.text,
     letterSpacing: -0.2,
   },
-  body: { 
-    fontSize: 15, 
+  body: {
+    fontSize: 15,
     color: colors.text,
     fontWeight: '500' as const,
   },
-  bodySmall: { 
-    fontSize: 14, 
+  bodySmall: {
+    fontSize: 14,
     color: colors.textLight,
     fontWeight: '400' as const,
   },
-  caption: { 
-    fontSize: 12, 
+  caption: {
+    fontSize: 12,
     color: colors.textLight,
     fontWeight: '500' as const,
   },

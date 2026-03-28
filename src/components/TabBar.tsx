@@ -17,16 +17,16 @@ const getTabIcon = (tabName: string, isActive: boolean, size: number) => {
   switch (tabName) {
     case 'Dashboard':
     case 'Home':
-      return <Home color={isActive ? '#EA580C' : '#94A3B8'} size={size} strokeWidth={2.5} />; // Orange-ish home
+      return <Home color={isActive ? colors.primary : '#94A3B8'} size={size} strokeWidth={2.5} />; // Theme Blue home
     case 'Batches':
     case 'Batch':
-      return <Package color={isActive ? '#B45309' : '#94A3B8'} size={size} strokeWidth={2.5} /> ; // Brown package
+      return <Package color={isActive ? colors.primary : '#94A3B8'} size={size} strokeWidth={2.5} /> ; // Theme Blue package
     case 'Students':
-      return <Users color={iconColor} size={size} strokeWidth={2.5} />;
+      return <Users color={isActive ? colors.primary : '#94A3B8'} size={size} strokeWidth={2.5} />;
     case 'Profile':
-      return <User color={iconColor} size={size} strokeWidth={2.5} />;
+      return <User color={isActive ? colors.primary : '#94A3B8'} size={size} strokeWidth={2.5} />;
     default:
-      return <Home color={iconColor} size={size} strokeWidth={2.5} />;
+      return <Home color={isActive ? colors.primary : '#94A3B8'} size={size} strokeWidth={2.5} />;
   }
 };
 
@@ -102,6 +102,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   activeTabText: {
-    color: '#4F46E5', // Matches the active tab purple text from screenshot
+    color: '#0F172A', // Standard Slate Black for active text
   },
 });

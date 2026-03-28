@@ -102,17 +102,13 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
         <View
           style={[
             styles.chapterBadge,
-            item.name === 'Chemistry'
-              ? { backgroundColor: '#FEF3C7' }
-              : { backgroundColor: '#EEF2FF' },
+            { backgroundColor: colors.primaryLight },
           ]}
         >
           <Text
             style={[
               styles.chapterText,
-              item.name === 'Chemistry'
-                ? { color: '#B45309' }
-                : { color: '#4F46E5' },
+              { color: colors.text },
             ]}
           >
             {item.chapters} Chapters
@@ -128,7 +124,7 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
          <View style={{ flex: 1 }}>
            <ProgressBar 
              progress={item.progress} 
-             color={item.name === 'Chemistry' ? '#F59E0B' : '#4F46E5'} 
+             color={colors.primary} 
              height={6} 
            />
          </View>
@@ -149,13 +145,17 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
       <View
         style={[
           styles.statusBadge,
-          { backgroundColor: item.status === 'Active' ? '#D1FAE5' : '#FEF3C7' },
+          { 
+            backgroundColor: item.status === 'Active' ? colors.successLight : colors.warningLight 
+          },
         ]}
       >
         <Text
           style={[
             styles.statusText,
-            { color: item.status === 'Active' ? '#059669' : '#B45309' },
+            { 
+              color: item.status === 'Active' ? colors.success : colors.warning 
+            },
           ]}
         >
           {item.status}
@@ -304,23 +304,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   headerSection: {
-    backgroundColor: '#4F46E5', // Indigo 600
-    paddingBottom: 10,
+    backgroundColor: colors.primary,
+    paddingTop: spacing.s,
+    paddingBottom: spacing.l,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   topNav: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    marginBottom: 8,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    marginBottom: 4,
   },
   backBtn: {
     marginRight: 12,
   },
   headerTitle: {
+    ...typography.h2,
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   plusIconButton: {
     padding: 4,
@@ -355,12 +358,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     marginHorizontal: 16,
     borderRadius: 99,
-    padding: 4,
-    marginBottom: 24,
+    padding: 3,
+    marginBottom: 16,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 8,
     alignItems: 'center',
     borderRadius: 99,
   },
@@ -380,13 +383,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   subjectCard: {
-    padding: 20,
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 12,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#F1F5F9', // Exact shadow-free border from ref
-    shadowOpacity: 0,
-    elevation: 0,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    borderRadius: 16,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -395,7 +397,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -409,10 +411,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   topicsText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#94A3B8',
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   progressRow: {
     flexDirection: 'row',
@@ -434,13 +436,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   studentAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   studentInitials: {
     color: '#3B82F6',
@@ -448,7 +450,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   studentName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
   },

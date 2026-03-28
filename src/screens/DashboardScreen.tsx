@@ -14,6 +14,7 @@ import {
   Moon,
   ChevronRight,
   GraduationCap,
+  Layers,
 } from 'lucide-react-native';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
@@ -24,10 +25,34 @@ interface DashboardScreenProps {
 }
 
 const mockBatches = [
-  { id: '1', name: 'React Native Basics', type: 'Morning', progress: 80, students: 25 },
-  { id: '2', name: 'Advanced JavaScript', type: 'Morning', progress: 45, students: 18 },
-  { id: '3', name: 'UI/UX Design', type: 'Evening', progress: 20, students: 30 },
-  { id: '4', name: 'Node.js Backend', type: 'Evening', progress: 90, students: 22 },
+  {
+    id: '1',
+    name: 'React Native Basics',
+    type: 'Morning',
+    progress: 80,
+    students: 25,
+  },
+  {
+    id: '2',
+    name: 'Advanced JavaScript',
+    type: 'Morning',
+    progress: 45,
+    students: 18,
+  },
+  {
+    id: '3',
+    name: 'UI/UX Design',
+    type: 'Evening',
+    progress: 20,
+    students: 30,
+  },
+  {
+    id: '4',
+    name: 'Node.js Backend',
+    type: 'Evening',
+    progress: 90,
+    students: 22,
+  },
 ];
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
@@ -40,6 +65,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     (acc, curr) => acc + curr.students,
     0,
   );
+  const totalBatches = mockBatches.length;
 
   const renderBatch = ({ item }: { item: (typeof mockBatches)[0] }) => (
     <Card onPress={() => onNavigateBatch(item.id)} style={styles.batchCard}>
@@ -81,7 +107,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <Text style={[typography.body, { color: colors.textLight }]}>
               Hello,
             </Text>
-            <Text style={[typography.h1, { color: colors.primary }]}>
+            <Text style={[typography.h1, { color: colors.text }]}>
               John Doe
             </Text>
           </View>
@@ -90,19 +116,29 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </View>
         </View>
 
-        <Card style={styles.summaryCard}>
-          <View style={styles.summaryIconContainer}>
-            <GraduationCap color={colors.white} size={32} strokeWidth={2} />
-          </View>
-          <View>
-            <Text style={[typography.body, styles.summaryText]}>
-              Total Active Students
-            </Text>
-            <Text style={[typography.h1, styles.summaryValue]}>
-              {totalStudents.toLocaleString()}
-            </Text>
-          </View>
-        </Card>
+        <View style={styles.statsRow}>
+          <Card style={[styles.statCard, { backgroundColor: colors.primary }]}>
+            <View style={styles.statIconContainer}>
+              <Layers color={colors.white} size={24} strokeWidth={2.5} />
+            </View>
+            <View>
+              <Text style={styles.statLabel}>Total Batches</Text>
+              <Text style={styles.statValue}>{totalBatches}</Text>
+            </View>
+          </Card>
+
+          <Card
+            style={[styles.statCard, { backgroundColor: colors.secondary }]}
+          >
+            <View style={styles.statIconContainer}>
+              <Users color={colors.white} size={24} strokeWidth={2.5} />
+            </View>
+            <View>
+              <Text style={styles.statLabel}>Total Students</Text>
+              <Text style={styles.statValue}>{totalStudents}</Text>
+            </View>
+          </Card>
+        </View>
 
         <View style={styles.tabsContainer}>
           <Text style={[typography.h2, { marginBottom: spacing.m }]}>
@@ -199,44 +235,45 @@ const styles = StyleSheet.create({
     borderColor: colors.secondary,
   },
   profileInitial: {
-    color: colors.secondary,
+    color: colors.text,
     fontSize: 20,
     fontWeight: '800',
   },
-  summaryCard: {
-    backgroundColor: colors.primary,
+  statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.l,
-    marginBottom: spacing.xl,
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  statCard: {
+    padding: spacing.l,
     borderRadius: radius.l,
     borderWidth: 0,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
   },
-  summaryIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  statIconContainer: {
+    width: 34,
+    height: 32,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.m,
+    marginBottom: spacing.m,
   },
-  summaryText: {
-    color: colors.primaryLight,
-    fontSize: 14,
-    opacity: 0.9,
+  statLabel: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  summaryValue: {
+  statValue: {
     color: colors.white,
-    marginTop: spacing.xs - 2,
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 24,
+    fontWeight: '800',
+    marginTop: 2,
   },
   tabsContainer: {
     marginBottom: spacing.m,
@@ -249,7 +286,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     backgroundColor: colors.white,
     borderRadius: radius.m,
     borderWidth: 1,
@@ -260,8 +297,8 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   filterText: {
-    ...typography.h3,
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: '700',
     color: colors.textLight,
   },
   activeFilterText: {
@@ -271,9 +308,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   batchCard: {
-    marginBottom: spacing.m,
-    padding: spacing.m,
-    borderRadius: radius.l,
+    marginBottom: spacing.s,
+    padding: spacing.s + 4,
+    borderRadius: radius.m,
   },
   batchHeader: {
     flexDirection: 'row',
@@ -286,42 +323,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.m,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.m,
+    marginRight: spacing.s + 4,
   },
   batchTitle: {
-    fontSize: 17,
+    fontSize: 15,
     flexShrink: 1,
   },
   batchDetailsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: spacing.l,
-    marginBottom: spacing.s,
+    marginTop: spacing.m,
+    marginBottom: spacing.xs,
   },
   studentsCount: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.secondaryLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 6,
   },
   studentsText: {
-    ...typography.caption,
-    marginLeft: 6,
+    fontSize: 11,
+    marginLeft: 4,
     fontWeight: '700',
-    color: colors.secondary,
+    color: colors.text,
   },
   progressText: {
     fontWeight: '800',
-    color: colors.primary,
-    fontSize: 14,
+    color: colors.text,
+    fontSize: 12,
   },
 });

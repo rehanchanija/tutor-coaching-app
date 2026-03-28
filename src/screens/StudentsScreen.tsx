@@ -13,7 +13,7 @@ const mockStudents = [
     roll: '01', 
     status: 'Active',
     avatarBg: '#EEF2FF', 
-    avatarColor: '#4F46E5' 
+    avatarColor: '#0F172A' 
   },
   { 
     id: '2', 
@@ -40,7 +40,7 @@ const mockStudents = [
     roll: '12', 
     status: 'Inactive',
     avatarBg: '#EEF2FF', 
-    avatarColor: '#4F46E5' 
+    avatarColor: '#0F172A' 
   },
   { 
     id: '5', 

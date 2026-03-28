@@ -179,7 +179,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
             <Text
               style={[
                 typography.caption,
-                { fontWeight: '800', color: colors.primary, fontSize: 13 },
+                { fontWeight: '800', color: colors.text, fontSize: 13 },
               ]}
             >
               {item.progress}%
@@ -655,14 +655,14 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   statusBadge: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: colors.successLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     marginRight: spacing.s,
   },
   statusText: {
-    color: '#059669',
+    color: colors.success,
     fontSize: 11,
     fontWeight: '800',
   },
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.m,
   },
   badgeText: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -913,7 +913,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   todayText: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: '800',
     textDecorationLine: 'underline',
   },

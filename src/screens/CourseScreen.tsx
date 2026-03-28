@@ -99,21 +99,17 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
       <View
         style={[
           styles.chapterNumberCircle,
-          item.status === 'Done'
-            ? { backgroundColor: '#D1FAE5' }
-            : item.status === 'In Progress'
-            ? { backgroundColor: '#EEF2FF' }
-            : { backgroundColor: '#F8FAFC' },
+          item.status === 'Done' || item.status === 'In Progress'
+            ? { backgroundColor: colors.primaryLight }
+            : { backgroundColor: colors.background },
         ]}
       >
         <Text
           style={[
             styles.chapterNumberText,
-            item.status === 'Done'
-              ? { color: '#059669' }
-              : item.status === 'In Progress'
-              ? { color: '#4F46E5' }
-              : { color: '#94A3B8' },
+            item.status === 'Done' || item.status === 'In Progress'
+              ? { color: colors.text }
+              : { color: colors.textLight },
           ]}
         >
           {index + 1}
@@ -124,6 +120,7 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
         <Text
           style={[
             styles.chapterName,
+            item.status === 'Done' && styles.completedChapterName,
             item.status === 'Locked' && { color: '#CBD5E1' },
           ]}
         >
@@ -218,19 +215,19 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
         </Modal>
 
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: '#EEF2FF' }]}>
-            <Text style={[styles.statValue, { color: '#4F46E5' }]}>
+          <View style={[styles.statCard, { backgroundColor: colors.primaryLight }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>
               {totalChapters}
             </Text>
-            <Text style={[styles.statLabel, { color: '#6366F1' }]}>
+            <Text style={[styles.statLabel, { color: colors.textLight }]}>
               Chapters
             </Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: '#D1FAE5' }]}>
-            <Text style={[styles.statValue, { color: '#059669' }]}>
+          <View style={[styles.statCard, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.statValue, { color: colors.white }]}>
               {completedChapters}
             </Text>
-            <Text style={[styles.statLabel, { color: '#10B981' }]}>
+            <Text style={[styles.statLabel, { color: colors.white }]}>
               Completed
             </Text>
           </View>
@@ -373,6 +370,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0F172A',
     marginBottom: 4,
+  },
+  completedChapterName: {
+    textDecorationLine: 'line-through',
+    color: '#94A3B8',
+    opacity: 0.7,
   },
   chapterSubtext: {
     fontSize: 14,

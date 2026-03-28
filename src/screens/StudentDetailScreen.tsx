@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
+import { colors, spacing, typography, radius } from '../theme/Theme';
 
 interface StudentDetailScreenProps {
   studentId: string;
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   topSection: {
-    backgroundColor: '#059669', // Emerald 600
+    backgroundColor: colors.primary,
     paddingBottom: 24,
   },
   header: {
@@ -210,13 +211,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#FEF08A', // Imitating the faint yellow text in screenshot
+    color: '#64748B',
   },
   infoValuePrimary: {
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#4F46E5', // Indigo 600
+    color: '#0F172A',
   },
   divider: {
     height: 1,
