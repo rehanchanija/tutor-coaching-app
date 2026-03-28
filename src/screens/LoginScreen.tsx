@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Mail, Lock, LogIn } from 'lucide-react-native';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { colors, spacing, typography } from '../theme/Theme';
@@ -13,14 +15,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.content}>
-          <Text style={[typography.h1, styles.title]}>Welcome Back</Text>
-          <Text style={[typography.body, styles.subtitle]}>Sign in to manage your students and batches</Text>
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <LogIn color={colors.primary} size={48} strokeWidth={1.5} />
+            </View>
+            <Text style={[typography.h1, styles.title]}>Welcome Back</Text>
+            <Text style={[typography.body, styles.subtitle]}>Sign in to manage your students and batches</Text>
+          </View>
 
           <View style={styles.form}>
             <Input
@@ -30,6 +37,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              icon={<Mail color={colors.textLight} size={20} />}
             />
             <Input
               label="Password"
@@ -37,6 +45,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              icon={<Lock color={colors.textLight} size={20} />}
             />
           </View>
 
@@ -64,19 +73,37 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     justifyContent: 'center',
   },
+  header: {
+    alignItems: 'center',
+    marginBottom: spacing.xxl,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.l,
+  },
   title: {
     marginBottom: spacing.xs,
     textAlign: 'center',
   },
   subtitle: {
     color: colors.textLight,
-    marginBottom: spacing.xxl,
     textAlign: 'center',
+    paddingHorizontal: spacing.l,
   },
   form: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   loginButton: {
-    marginTop: spacing.m,
+    marginTop: spacing.s,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

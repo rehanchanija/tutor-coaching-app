@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Layers, ChevronRight, TrendingUp } from 'lucide-react-native';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
-import { colors, spacing, typography } from '../theme/Theme';
+import { colors, radius, spacing, typography } from '../theme/Theme';
 
 interface BatchScreenProps {
   onNavigateSubject: (batchId: string) => void;
@@ -19,25 +21,33 @@ const allBatches = [
 
 export const BatchScreen: React.FC<BatchScreenProps> = ({ onNavigateSubject }) => {
   const renderBatch = ({ item }: { item: typeof allBatches[0] }) => (
-    <Card onPress={() => onNavigateSubject(item.id)}>
+    <Card onPress={() => onNavigateSubject(item.id)} style={styles.batchCard}>
       <View style={styles.headerRow}>
-        <Text style={typography.h3}>{item.name}</Text>
+        <View style={styles.titleWrapper}>
+          <View style={styles.iconCircle}>
+            <Layers size={18} color={colors.primary} />
+          </View>
+          <Text style={[typography.h3, styles.batchName]}>{item.name}</Text>
+        </View>
+        <ChevronRight color={colors.textLight} size={20} />
+      </View>
+      
+      <View style={styles.badgeRow}>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{item.type}</Text>
         </View>
-      </View>
-      <View style={styles.progressContainer}>
         <View style={styles.progressTextContainer}>
-          <Text style={typography.caption}>Overall Progress</Text>
-          <Text style={typography.caption}>{item.progress}%</Text>
+          <TrendingUp size={14} color={colors.textLight} style={{ marginRight: 4 }} />
+          <Text style={typography.caption}>{item.progress}% Completed</Text>
         </View>
-        <ProgressBar progress={item.progress} />
       </View>
+
+      <ProgressBar progress={item.progress} />
     </Card>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.container}>
         <Text style={[typography.h1, styles.title]}>All Batches</Text>
         <FlatList
@@ -68,29 +78,55 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: spacing.xxl,
   },
+  batchCard: {
+    marginBottom: spacing.m,
+  },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: spacing.m,
   },
-  badge: {
+  titleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: spacing.m,
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.m,
     backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.s,
+  },
+  batchName: {
+    fontSize: 16,
+    flex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  badge: {
+    backgroundColor: colors.background,
     paddingHorizontal: spacing.s,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   badgeText: {
-    color: colors.primary,
+    color: colors.textLight,
     fontSize: 12,
     fontWeight: '600',
   },
-  progressContainer: {
-    width: '100%',
-  },
   progressTextContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
+    alignItems: 'center',
   },
 });

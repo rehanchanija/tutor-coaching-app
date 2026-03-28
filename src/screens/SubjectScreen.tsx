@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { BookOpen, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react-native';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
-import { colors, spacing, typography } from '../theme/Theme';
+import { colors, radius, spacing, typography } from '../theme/Theme';
 
 interface SubjectScreenProps {
   onBack: () => void;
@@ -18,24 +20,38 @@ const mockSubjects = [
 
 export const SubjectScreen: React.FC<SubjectScreenProps> = ({ onBack, onNavigateCourse }) => {
   const renderSubject = ({ item }: { item: typeof mockSubjects[0] }) => (
-    <Card onPress={() => onNavigateCourse(item.id)}>
-      <Text style={[typography.h3, styles.subjectName]}>{item.name}</Text>
-      <View style={styles.progressContainer}>
+    <Card onPress={() => onNavigateCourse(item.id)} style={styles.subjectCard}>
+      <View style={styles.topRow}>
+        <View style={styles.iconCircle}>
+          {item.progress === 100 ? (
+            <CheckCircle2 color={colors.success} size={20} />
+          ) : (
+            <BookOpen color={colors.primary} size={20} />
+          )}
+        </View>
+        <Text style={[typography.h3, styles.subjectName, item.progress === 100 && { color: colors.success }]}>
+          {item.name}
+        </Text>
+        <ChevronRight color={colors.textLight} size={20} />
+      </View>
+      <View style={styles.progressSection}>
         <View style={styles.progressTextContainer}>
           <Text style={typography.caption}>Completion</Text>
-          <Text style={typography.caption}>{item.progress}%</Text>
+          <Text style={[typography.caption, item.progress === 100 && { color: colors.success }]}>
+            {item.progress}%
+          </Text>
         </View>
-        <ProgressBar progress={item.progress} />
+        <ProgressBar progress={item.progress} color={item.progress === 100 ? colors.success : colors.primary} />
       </View>
     </Card>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={styles.backText}>← Back</Text>
+          <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
+            <ChevronLeft color={colors.text} size={24} />
           </TouchableOpacity>
           <Text style={[typography.h2, styles.title]}>Subjects</Text>
         </View>
@@ -69,13 +85,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.s,
   },
   backButton: {
-    paddingRight: spacing.m,
-    paddingVertical: spacing.xs,
-  },
-  backText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.s,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   title: {
     flex: 1,
@@ -83,11 +101,30 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: spacing.xxl,
   },
-  subjectName: {
-    marginBottom: spacing.l,
+  subjectCard: {
+    marginBottom: spacing.m,
   },
-  progressContainer: {
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.round,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.s,
+  },
+  subjectName: {
+    flex: 1,
+    paddingRight: spacing.s,
+  },
+  progressSection: {
     width: '100%',
+    paddingLeft: 44, 
   },
   progressTextContainer: {
     flexDirection: 'row',

@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet, Text } from 'react-native';
+import { Check } from 'lucide-react-native';
 import { colors, radius, spacing, typography } from '../theme/Theme';
 
 interface CheckboxProps {
@@ -16,7 +17,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({ checked, onChange, label }) 
       activeOpacity={0.7}
     >
       <View style={[styles.box, checked && styles.checkedBox]}>
-        {checked && <View style={styles.innerCheck} />}
+        {checked && <Check color={colors.white} size={14} strokeWidth={3} />}
       </View>
       {label && <Text style={[typography.body, styles.label, checked && styles.checkedLabel]}>{label}</Text>}
     </TouchableOpacity>
@@ -37,22 +38,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.s,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.m,
   },
   checkedBox: {
     borderColor: colors.primary,
     backgroundColor: colors.primary,
   },
-  innerCheck: {
-    width: 12,
-    height: 12,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-    borderColor: colors.white,
-    transform: [{ rotate: '45deg' }, { translateY: -2 }, { translateX: -1 }],
-  },
   label: {
     color: colors.text,
+    marginLeft: spacing.m,
   },
   checkedLabel: {
     color: colors.textLight,

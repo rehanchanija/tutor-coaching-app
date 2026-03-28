@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChevronLeft, CircleDashed, PlayCircle, CheckCircle } from 'lucide-react-native';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
 import { Checkbox } from '../components/Checkbox';
-import { colors, spacing, typography } from '../theme/Theme';
+import { colors, radius, spacing, typography } from '../theme/Theme';
 
 interface CourseScreenProps {
   onBack: () => void;
@@ -49,37 +51,53 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
     }
   };
 
+  const getStatusIcon = (status: CourseStatus, size = 16) => {
+    switch (status) {
+      case 'Completed': return <CheckCircle size={size} color={colors.success} />;
+      case 'Ongoing': return <PlayCircle size={size} color={colors.warning} />;
+      case 'Not Started': return <CircleDashed size={size} color={colors.textLight} />;
+      default: return <CircleDashed size={size} color={colors.textLight} />;
+    }
+  };
+
   const renderCourse = ({ item }: { item: CourseItem }) => (
-    <Card>
+    <Card style={styles.courseCard}>
       <View style={styles.courseHeader}>
         <View style={styles.courseInfo}>
           <Text style={[typography.h3, styles.courseName]}>{item.name}</Text>
-          <View style={styles.statusRow}>
-            <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(item.status) }]} />
-            <Text style={styles.statusText}>{item.status}</Text>
+          <View style={styles.statusBadge}>
+            {getStatusIcon(item.status)}
+            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+              {item.status}
+            </Text>
           </View>
         </View>
-        <Checkbox
-          checked={item.status === 'Completed'}
-          onChange={(checked) => toggleCourseCompletion(item.id, checked)}
-        />
+        <View style={styles.checkboxContainer}>
+          <Checkbox
+            checked={item.status === 'Completed'}
+            onChange={(checked) => toggleCourseCompletion(item.id, checked)}
+          />
+        </View>
       </View>
-      <View style={styles.progressContainer}>
+      
+      <View style={styles.progressSection}>
         <View style={styles.progressTextContainer}>
           <Text style={typography.caption}>Course Progress</Text>
-          <Text style={typography.caption}>{item.progress}%</Text>
+          <Text style={[typography.caption, { color: getStatusColor(item.status), fontWeight: '600' }]}>
+            {item.progress}%
+          </Text>
         </View>
-        <ProgressBar progress={item.progress} color={getStatusColor(item.status)} />
+        <ProgressBar progress={item.progress} color={getStatusColor(item.status)} height={6} />
       </View>
     </Card>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={styles.backText}>← Back</Text>
+          <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
+            <ChevronLeft color={colors.text} size={24} />
           </TouchableOpacity>
           <Text style={[typography.h2, styles.title]}>Courses</Text>
         </View>
@@ -113,13 +131,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.s,
   },
   backButton: {
-    paddingRight: spacing.m,
-    paddingVertical: spacing.xs,
-  },
-  backText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.s,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   title: {
     flex: 1,
@@ -127,11 +147,13 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: spacing.xxl,
   },
+  courseCard: {
+    marginBottom: spacing.m,
+  },
   courseHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: spacing.l,
   },
   courseInfo: {
     flex: 1,
@@ -139,23 +161,31 @@ const styles = StyleSheet.create({
   },
   courseName: {
     marginBottom: spacing.xs,
+    fontSize: 16,
   },
-  statusRow: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: spacing.xs,
+    backgroundColor: colors.background,
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.s,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: 4,
   },
   statusText: {
     ...typography.caption,
     fontWeight: '600',
+    marginLeft: spacing.xs,
   },
-  progressContainer: {
+  checkboxContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+  },
+  progressSection: {
     width: '100%',
+    marginTop: spacing.l,
   },
   progressTextContainer: {
     flexDirection: 'row',

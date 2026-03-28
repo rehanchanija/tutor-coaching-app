@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { View, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { BatchScreen } from './src/screens/BatchScreen';
@@ -81,7 +82,8 @@ const App = () => {
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <View style={styles.container}>
         {renderScreen()}
@@ -93,7 +95,8 @@ const App = () => {
           onChangeTab={(tab) => setActiveTab(tab as TabName)}
         />
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 
