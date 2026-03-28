@@ -98,38 +98,24 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
   const renderSubject = ({ item }: { item: (typeof mockSubjects)[0] }) => (
     <Card onPress={() => onNavigateCourse(item.id)} style={styles.subjectCard}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{item.name}</Text>
-        <View
-          style={[
-            styles.chapterBadge,
-            { backgroundColor: colors.primaryLight },
-          ]}
-        >
-          <Text
-            style={[
-              styles.chapterText,
-              { color: colors.text },
-            ]}
-          >
-            {item.chapters} Chapters
-          </Text>
+        <View style={styles.iconBox}>
+          <Book color={colors.primary} size={22} strokeWidth={2.5} />
         </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.subjectName}>{item.name}</Text>
+          <Text style={styles.topicText} numberOfLines={1}>{item.topics}</Text>
+        </View>
+        <ChevronRight color={colors.textMuted} size={20} />
       </View>
 
-      <Text style={styles.topicsText} numberOfLines={1}>
-        {item.topics}
-      </Text>
-
-      <View style={styles.progressRow}>
-         <View style={{ flex: 1 }}>
-           <ProgressBar 
-             progress={item.progress} 
-             color={colors.primary} 
-             height={6} 
-           />
-         </View>
-         <Text style={styles.progressPercentText}>{item.progress}%</Text>
+      <View style={styles.cardFooter}>
+        <View style={styles.metaBox}>
+          <LayoutGrid color={colors.textLight} size={14} />
+          <Text style={styles.metaText}>{item.chapters} Chapters</Text>
+        </View>
+        <Text style={styles.progressValue}>{item.progress}%</Text>
       </View>
+      <ProgressBar progress={item.progress} color={colors.primary} height={6} />
     </Card>
   );
 
@@ -245,7 +231,7 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
 
       <View style={styles.content}>
         {/* Toggle Tab Bar */}
-        <View style={styles.tabBar}>
+        <View style={styles.tabsRow}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'Subjects' && styles.activeTab]}
             onPress={() => setActiveTab('Subjects')}
@@ -328,52 +314,36 @@ const styles = StyleSheet.create({
   plusIconButton: {
     padding: 4,
   },
-  statsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    alignItems: 'flex-start',
-  },
-  statValue: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  statLabel: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 14,
-    fontWeight: '700',
-    paddingVertical: 4,
-  },
   content: {
     flex: 1,
     backgroundColor: '#FFFFFF',
     paddingTop: 20,
   },
-  tabBar: {
+  tabsRow: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 14,
+    padding: 4,
     marginHorizontal: 16,
-    borderRadius: 99,
-    padding: 3,
-    marginBottom: 16,
+    marginVertical: 20,
   },
   tab: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 99,
+    borderRadius: 11,
   },
   activeTab: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   tabText: {
-    color: '#64748B',
-    fontWeight: '700',
     fontSize: 14,
+    fontWeight: '700',
+    color: colors.textLight,
   },
   activeTabText: {
     color: '#FFFFFF',
@@ -392,40 +362,49 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subjectName: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  topicText: {
+    fontSize: 13,
+    color: colors.textLight,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  cardFooter: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  chapterBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  chapterText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  topicsText: {
-    fontSize: 14,
-    color: '#94A3B8',
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  progressRow: {
+  metaBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    gap: 6,
   },
-  progressPercentText: {
-    marginLeft: 12,
+  metaText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#475569',
+    color: colors.textLight,
+  },
+  progressValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.primary,
   },
   studentItem: {
     flexDirection: 'row',

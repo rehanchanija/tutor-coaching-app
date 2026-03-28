@@ -185,7 +185,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
               {item.progress}%
             </Text>
           </View>
-          <ProgressBar progress={item.progress} color="#4F46E5" height={6} />
+          <ProgressBar progress={item.progress} color={colors.primary} height={6} />
         </View>
       </Card>
     );
@@ -199,7 +199,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
           <TouchableOpacity
             onPress={() => setModalVisible(true)}
             style={styles.plusButton}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
           >
             <Plus color="#FFFFFF" size={24} strokeWidth={2.5} />
           </TouchableOpacity>
@@ -207,7 +207,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
 
         <View style={styles.searchContainer}>
           <Search
-            color="#64748B"
+            color={colors.textLight}
             size={18}
             strokeWidth={2.5}
             style={styles.searchIcon}
@@ -215,7 +215,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
           <TextInput
             style={styles.searchInput}
             placeholder="Search batches..."
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -590,27 +590,29 @@ const styles = StyleSheet.create({
   },
   plusButton: {
     backgroundColor: colors.primary,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 50,
+    height: 50,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: 10,
     elevation: 4,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFF',
     borderRadius: 16,
-    height: 48,
+    height: 50,
     paddingHorizontal: spacing.m,
     marginBottom: spacing.l,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
   searchIcon: {
     marginRight: spacing.s,
