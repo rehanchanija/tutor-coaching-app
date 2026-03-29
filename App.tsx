@@ -30,9 +30,11 @@ const App = () => {
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [selectedBatchChat, setSelectedBatchChat] = useState<{id: string, name: string} | null>(null);
+  const [userData, setUserData] = useState<any>(null);
 
-  const handleLogin = () => {
+  const handleLogin = (data: any) => {
     setIsAuthenticated(true);
+    setUserData(data.user);
     setCurrentScreen('Main');
   };
 
@@ -40,6 +42,7 @@ const App = () => {
     setIsAuthenticated(false);
     setCurrentScreen('Login');
     setActiveTab('Dashboard');
+    setUserData(null);
     setSelectedBatchId(null);
     setSelectedSubjectId(null);
   };
@@ -135,6 +138,7 @@ const App = () => {
           <DashboardScreen 
             onNavigateBatch={handleNavigateBatch} 
             onNavigateNotifications={() => setCurrentScreen('Notifications')}
+            userName={userData?.name}
           />
         );
       case 'Batches':
@@ -147,6 +151,7 @@ const App = () => {
             onLogout={handleLogout} 
             onNavigateSupport={() => setCurrentScreen('Support')}
             onNavigatePrivacy={() => setCurrentScreen('Privacy')}
+            userData={userData}
           />
         );
       case 'Chat':

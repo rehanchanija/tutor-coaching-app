@@ -18,7 +18,7 @@
     "react-native-safe-area-context": "^5.5.2",
     "react-native-svg": "^15.15.4",
     "react-native-toast-message": "^2.3.3",
-    "zod": "^4.3.6"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

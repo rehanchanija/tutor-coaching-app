@@ -20,19 +20,21 @@ interface ProfileScreenProps {
   onLogout: () => void;
   onNavigateSupport: () => void;
   onNavigatePrivacy: () => void;
+  userData?: any;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onLogout,
   onNavigateSupport,
   onNavigatePrivacy,
+  userData,
 }) => {
   const adminData = {
     coachingName: 'SRK Coaching Center',
-    adminName: 'John Doe',
-    phone: '+91 98765 43210',
-    email: 'admin@elitecoaching.com',
-    role: 'Head Admin',
+    adminName: userData?.name || 'Admin User',
+    phone: userData?.phone || '+91 98765 43210',
+    email: userData?.email || 'admin@elitecoaching.com',
+    role: userData?.role || 'Head Admin',
   };
 
   const renderOption = (

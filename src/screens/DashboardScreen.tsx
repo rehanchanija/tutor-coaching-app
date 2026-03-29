@@ -24,6 +24,7 @@ import { colors, radius, spacing, typography } from '../theme/Theme';
 interface DashboardScreenProps {
   onNavigateBatch: (batchId: string) => void;
   onNavigateNotifications: () => void;
+  userName?: string;
 }
 
 const mockBatches = [
@@ -60,6 +61,7 @@ const mockBatches = [
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateBatch,
   onNavigateNotifications,
+  userName = 'Admin',
 }) => {
   const [filter, setFilter] = useState<'Morning' | 'Evening'>('Morning');
 
@@ -105,7 +107,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Good Morning,</Text>
-            <Text style={typography.h1}>John Doe</Text>
+            <Text style={typography.h1}>{userName}</Text>
           </View>
           <TouchableOpacity 
             style={styles.notifBadge} 
