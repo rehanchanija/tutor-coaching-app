@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { z } from 'zod';
 import {
   View,
   Text,
@@ -97,6 +98,34 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
   >('start');
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const batchSchema = z.object({
+    name: z.string().min(3, 'Batch name must be at least 3 characters'),
+    startDate: z.string().min(10, 'Invalid start date'),
+    completionDate: z.string().min(10, 'Invalid completion date'),
+  });
+
+  const validate = () => {
+    try {
+      setErrors({});
+      batchSchema.parse({
+        name: batchName,
+        startDate,
+        completionDate,
+      });
+      return true;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const formattedErrors: Record<string, string> = {};
+        err.issues.forEach(e => {
+          if (e.path[0]) formattedErrors[e.path[0].toString()] = e.message;
+        });
+        setErrors(formattedErrors);
+      }
+      return false;
+    }
+  };
   const [showYearSelector, setShowYearSelector] = useState(false);
   const months = [
     'Jan',
@@ -118,11 +147,13 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
   );
 
   const handleCreateBatch = () => {
+    if (!validate()) return;
     setModalVisible(false);
     setBatchName('');
     setBatchType('Morning');
     setStartDate('');
     setCompletionDate('');
+    setErrors({});
   };
 
   const renderBatch = ({ item }: { item: (typeof allBatches)[0] }) => {
@@ -266,6 +297,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
                     placeholder="e.g. JEE Advanced 2026"
                     value={batchName}
                     onChangeText={setBatchName}
+                    error={errors.name}
                   />
 
                   <Text style={styles.fieldLabel}>Timing Slot</Text>
@@ -340,6 +372,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
                         rightIcon={
                           <Calendar size={18} color={colors.textLight} />
                         }
+                        error={errors.startDate}
                       />
                     </View>
                     <View style={{ width: 16 }} />
@@ -356,6 +389,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
                         rightIcon={
                           <Calendar size={18} color={colors.textLight} />
                         }
+                        error={errors.completionDate}
                       />
                     </View>
                   </View>

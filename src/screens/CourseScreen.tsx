@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { z } from 'zod';
 import {
   View,
   Text,
@@ -46,6 +47,29 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [chapterName, setChapterName] = useState('');
   const [lectureCount, setLectureCount] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const chapterSchema = z.object({
+    name: z.string().min(3, 'Chapter name must be at least 3 characters'),
+    lectures: z.string().regex(/^\d+$/, 'Must be a number').refine(v => parseInt(v) > 0, 'At least 1 lecture required'),
+  });
+
+  const validate = () => {
+    try {
+      setErrors({});
+      chapterSchema.parse({ name: chapterName, lectures: lectureCount });
+      return true;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const formattedErrors: Record<string, string> = {};
+        err.issues.forEach(e => {
+          if (e.path[0]) formattedErrors[e.path[0].toString()] = e.message;
+        });
+        setErrors(formattedErrors);
+      }
+      return false;
+    }
+  };
 
   const toggleStatus = (id: string) => {
     setChapters(prev =>
@@ -62,18 +86,18 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
   };
 
   const handleCreateChapter = () => {
-    if (chapterName.trim()) {
-      const newChapter: ChapterItem = {
-        id: Math.random().toString(),
-        name: chapterName,
-        lectures: parseInt(lectureCount) || 1,
-        status: 'In Progress',
-      };
-      setChapters([...chapters, newChapter]);
-      setModalVisible(false);
-      setChapterName('');
-      setLectureCount('');
-    }
+    if (!validate()) return;
+    const newChapter: ChapterItem = {
+      id: Math.random().toString(),
+      name: chapterName,
+      lectures: parseInt(lectureCount) || 1,
+      status: 'In Progress',
+    };
+    setChapters([...chapters, newChapter]);
+    setModalVisible(false);
+    setChapterName('');
+    setLectureCount('');
+    setErrors({});
   };
 
   const totalChapters = chapters.length;
@@ -193,6 +217,7 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
                     value={chapterName}
                     onChangeText={setChapterName}
                     autoFocus
+                    error={errors.name}
                   />
                   <Input
                     label="Lecture Count"
@@ -200,6 +225,7 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
                     value={lectureCount}
                     onChangeText={setLectureCount}
                     keyboardType="numeric"
+                    error={errors.lectures}
                   />
                 </View>
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { z } from 'zod';
 import {
   View,
   Text,
@@ -29,8 +30,31 @@ export const CreateBatchScreen: React.FC<CreateBatchScreenProps> = ({
 }) => {
   const [batchName, setBatchName] = useState('');
   const [batchType, setBatchType] = useState<'Morning' | 'Evening'>('Morning');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const batchSchema = z.object({
+    name: z.string().min(3, 'Batch name must be at least 3 characters'),
+  });
+
+  const validate = () => {
+    try {
+      setErrors({});
+      batchSchema.parse({ name: batchName });
+      return true;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const formattedErrors: Record<string, string> = {};
+        err.issues.forEach(e => {
+          if (e.path[0]) formattedErrors[e.path[0].toString()] = e.message;
+        });
+        setErrors(formattedErrors);
+      }
+      return false;
+    }
+  };
 
   const handleCreate = () => {
+    if (!validate()) return;
     // Mock save
     console.log('Batch Created', { batchName, batchType });
     onBack();
@@ -65,6 +89,7 @@ export const CreateBatchScreen: React.FC<CreateBatchScreenProps> = ({
               value={batchName}
               onChangeText={setBatchName}
               icon={<BookOpen color={colors.textLight} size={20} />}
+              error={errors.name}
             />
           </View>
 

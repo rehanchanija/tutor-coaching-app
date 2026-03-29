@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { z } from 'zod';
 import {
   View,
   Text,
@@ -103,6 +104,33 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedBatch, setSelectedBatch] = useState('Select Batch');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const studentSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    phone: z.string().min(10, 'Phone number must be at least 10 digits'),
+    address: z.string().min(5, 'Address must be at least 5 characters'),
+    batch: z.string().refine(val => val !== 'Select Batch', {
+      message: 'Please select a batch',
+    }),
+  });
+
+  const validate = () => {
+    try {
+      setErrors({});
+      studentSchema.parse({ name, phone, address, batch: selectedBatch });
+      return true;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const formattedErrors: Record<string, string> = {};
+        err.issues.forEach(e => {
+          if (e.path[0]) formattedErrors[e.path[0].toString()] = e.message;
+        });
+        setErrors(formattedErrors);
+      }
+      return false;
+    }
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -127,6 +155,7 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
   };
 
   const handleAddStudent = () => {
+    if (!validate()) return;
     setModalVisible(false);
     // Reset form
     setName('');
@@ -239,12 +268,16 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  style={styles.modalBody}
+                >
                   <Input
                     label="Full Name"
                     placeholder="e.g. Rahul Verma"
                     value={name}
                     onChangeText={setName}
+                    error={errors.name}
                   />
 
                   <Input
@@ -254,6 +287,7 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
                     icon={<Phone size={18} color={colors.textMuted} />}
+                    error={errors.phone}
                   />
 
                   <Input
@@ -262,6 +296,7 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                     value={address}
                     onChangeText={setAddress}
                     icon={<MapPin size={18} color={colors.textMuted} />}
+                    error={errors.address}
                   />
 
                   <Text style={styles.fieldLabel}>Assign Batch</Text>
@@ -271,7 +306,14 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                   >
                     <View style={styles.batchSelectorInner}>
                       <Layers size={18} color={colors.primary} />
-                      <Text style={[styles.batchSelectorText, selectedBatch !== 'Select Batch' && { color: colors.text }]}>
+                      <Text
+                        style={[
+                          styles.batchSelectorText,
+                          selectedBatch !== 'Select Batch' && {
+                            color: colors.text,
+                          },
+                        ]}
+                      >
                         {selectedBatch}
                       </Text>
                     </View>
@@ -302,11 +344,11 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
               <View style={styles.pickerHeader}>
                 <Text style={styles.pickerTitle}>Select Batch</Text>
                 <TouchableOpacity onPress={() => setBatchPickerVisible(false)}>
-                   <X color={colors.textMuted} size={24} />
+                  <X color={colors.textMuted} size={24} />
                 </TouchableOpacity>
               </View>
               <ScrollView>
-                {availableBatches.map((batch) => (
+                {availableBatches.map(batch => (
                   <TouchableOpacity
                     key={batch}
                     style={styles.pickerItem}
@@ -315,7 +357,12 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                       setBatchPickerVisible(false);
                     }}
                   >
-                    <Text style={[styles.pickerItemText, selectedBatch === batch && styles.selectedItemText]}>
+                    <Text
+                      style={[
+                        styles.pickerItemText,
+                        selectedBatch === batch && styles.selectedItemText,
+                      ]}
+                    >
                       {batch}
                     </Text>
                   </TouchableOpacity>
@@ -368,7 +415,13 @@ const styles = StyleSheet.create({
     borderColor: '#F1F5F9',
   },
   searchIcon: { marginRight: 12 },
-  searchInput: { flex: 1, fontSize: 15, color: '#0F172A', fontWeight: '500', height: '100%' },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '500',
+    height: '100%',
+  },
   listContent: { paddingBottom: 100 },
   studentItem: {
     flexDirection: 'row',
@@ -378,14 +431,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F8FAFC',
   },
-  avatar: { width: 52, height: 52, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
   avatarText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
   info: { flex: 1, justifyContent: 'center' },
   name: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
   subtitle: { fontSize: 14, fontWeight: '600', color: '#94A3B8' },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
   statusText: { fontSize: 12, fontWeight: '800' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'flex-end' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'flex-end',
+  },
   keyboardView: { width: '100%' },
   modalContent: {
     backgroundColor: '#FFF',
@@ -394,12 +458,30 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
   modalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  modalIconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center' },
+  modalIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   closeBtn: { padding: 6, backgroundColor: '#F8FAFC', borderRadius: 12 },
   modalBody: { maxHeight: 400, marginBottom: 20 },
-  fieldLabel: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 8, marginTop: 4 },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+    marginTop: 4,
+  },
   batchSelector: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -413,13 +495,45 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   batchSelectorInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  batchSelectorText: { fontSize: 15, fontWeight: '600', color: colors.textMuted },
+  batchSelectorText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
   submitBtn: { width: '100%' },
-  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  pickerContent: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 20 },
-  pickerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  pickerContent: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 20,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
   pickerTitle: { fontSize: 18, fontWeight: '800', color: colors.text },
-  pickerItem: { padding: 20, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
+  pickerItem: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
+  },
   pickerItemText: { fontSize: 16, fontWeight: '600', color: colors.textLight },
   selectedItemText: { color: colors.primary, fontWeight: '800' },
+  errorText: {
+    color: colors.danger,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: -12,
+    marginBottom: 16,
+    marginLeft: 4,
+  },
 });

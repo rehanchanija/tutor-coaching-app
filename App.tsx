@@ -18,6 +18,7 @@ import { MessageScreen } from './src/screens/MessageScreen';
 import { BatchChatScreen } from './src/screens/BatchChatScreen';
 import { TabBar } from './src/components/TabBar';
 import { colors } from './src/theme/Theme';
+import Toast from 'react-native-toast-message';
 
 type ScreenName = 'Login' | 'Main' | 'Subject' | 'Course' | 'StudentDetail' | 'Notifications' | 'Support' | 'Privacy' | 'ChatSupport' | 'BatchChat';
 type TabName = 'Dashboard' | 'Batches' | 'Students' | 'Chat' | 'Profile';
@@ -170,18 +171,20 @@ const App = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-      <View style={styles.container}>
-        {renderScreen()}
-      </View>
-      {isAuthenticated && currentScreen === 'Main' && (
-        <TabBar
-          tabs={['Dashboard', 'Batches', 'Students', 'Chat', 'Profile']}
-          activeTab={activeTab}
-          onChangeTab={(tab) => setActiveTab(tab as TabName)}
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={colors.background}
         />
-      )}
+        <View style={styles.container}>{renderScreen()}</View>
+        {isAuthenticated && currentScreen === 'Main' && (
+          <TabBar
+            tabs={['Dashboard', 'Batches', 'Students', 'Chat', 'Profile']}
+            activeTab={activeTab}
+            onChangeTab={tab => setActiveTab(tab as TabName)}
+          />
+        )}
       </SafeAreaView>
+      <Toast />
     </SafeAreaProvider>
   );
 };

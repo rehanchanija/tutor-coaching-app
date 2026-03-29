@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { z } from 'zod';
 import {
   View,
   Text,
@@ -24,6 +25,9 @@ import {
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { colors, spacing, typography, radius } from '../theme/Theme';
+import Toast from 'react-native-toast-message';
+
+const BASE_URL = 'http://127.0.0.1:3000'; // Replace with actual API URL
 
 const { width } = Dimensions.get('window');
 
@@ -40,44 +44,206 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loginSchema = z.object({
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+  });
+
+  const forgotSchema = z.object({
+    email: z.string().email('Invalid email address'),
+  });
+
+  const verifySchema = z.object({
+    code: z.string().length(6, 'Verification code must be 6 digits'),
+  });
+
+  const resetSchema = z
+    .object({
+      newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+      confirmPassword: z
+        .string()
+        .min(6, 'Password must be at least 6 characters'),
+    })
+    .refine(data => data.newPassword === data.confirmPassword, {
+      message: 'Passwords do not match',
+      path: ['confirmPassword'],
+    });
 
   const changeMode = (newMode: LoginMode) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setMode(newMode);
+    setErrors({});
   };
 
-  const handleSendLink = () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email address');
-      return;
+  const validate = (mode: LoginMode) => {
+    try {
+      setErrors({});
+      if (mode === 'login') loginSchema.parse({ email, password });
+      if (mode === 'forgot') forgotSchema.parse({ email });
+      if (mode === 'verify') verifySchema.parse({ code });
+      if (mode === 'reset') resetSchema.parse({ newPassword, confirmPassword });
+      return true;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const formattedErrors: Record<string, string> = {};
+        err.issues.forEach(e => {
+          if (e.path[0]) formattedErrors[e.path[0].toString()] = e.message;
+        });
+        setErrors(formattedErrors);
+      }
+      return false;
     }
-    // Mock API call
-    changeMode('verify');
-    Alert.alert('Sent!', 'A verification code has been sent to your email.');
   };
 
-  const handleVerify = () => {
-    if (code.length < 4) {
-      Alert.alert('Error', 'Please enter a valid 6-digit code');
-      return;
+  const handleLogin = async () => {
+    if (validate('login')) {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'Logged in successfully!',
+          });
+          onLogin();
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Login Error',
+            text2: data.message || 'Invalid email or password.',
+          });
+        }
+      } catch (err) {
+        Toast.show({
+          type: 'error',
+          text1: 'Connection Error',
+          text2: 'Unable to connect to service. Check your internet.',
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-    changeMode('reset');
   };
 
-  const handleResetPassword = () => {
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
+  const handleSendLink = async () => {
+    if (validate('forgot')) {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        
+        if (response.ok) {
+          changeMode('verify');
+          Toast.show({
+            type: 'success',
+            text1: 'Code Sent',
+            text2: 'A verification code has been sent to your email.',
+          });
+        } else {
+          const data = await response.json();
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: data.message || 'Failed to send reset code.',
+          });
+        }
+      } catch (err) {
+        Toast.show({
+          type: 'error',
+          text1: 'Connection Error',
+          text2: 'Unable to connect to service.',
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-    if (newPassword.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
+  };
+
+  const handleVerify = async () => {
+    if (validate('verify')) {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/auth/verify-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code }),
+        });
+
+        if (response.ok) {
+          changeMode('reset');
+          Toast.show({
+            type: 'success',
+            text1: 'Verified',
+            text2: 'Enter your new password.',
+          });
+        } else {
+          const data = await response.json();
+          Toast.show({
+            type: 'error',
+            text1: 'Verification Failed',
+            text2: data.message || 'Invalid verification code.',
+          });
+        }
+      } catch (err) {
+        Toast.show({
+          type: 'error',
+          text1: 'Connection Error',
+          text2: 'Unable to connect to service.',
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-    Alert.alert(
-      'Success',
-      'Your password has been reset successfully. Please log in.',
-    );
-    changeMode('login');
+  };
+
+  const handleResetPassword = async () => {
+    if (validate('reset')) {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code, newPassword }),
+        });
+
+        if (response.ok) {
+          Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'Your password has been reset successfully.',
+          });
+          changeMode('login');
+        } else {
+          const data = await response.json();
+          Toast.show({
+            type: 'error',
+            text1: 'Reset Failed',
+            text2: data.message || 'Failed to reset password.',
+          });
+        }
+      } catch (err) {
+        Toast.show({
+          type: 'error',
+          text1: 'Connection Error',
+          text2: 'Unable to connect to service.',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   const renderHeader = () => {
@@ -132,6 +298,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              error={errors.email}
               icon={<Mail color={colors.textLight} size={20} strokeWidth={2} />}
             />
             <Input
@@ -140,15 +307,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              error={errors.password}
               icon={<Lock color={colors.textLight} size={20} strokeWidth={2} />}
             />
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => changeMode('forgot')}
               style={styles.forgotBtn}
               activeOpacity={0.7}
             >
               <Text style={styles.forgotText}>Forgot Password?</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         );
       case 'forgot':
@@ -161,6 +329,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              error={errors.email}
               icon={<Mail color={colors.textLight} size={20} strokeWidth={2} />}
             />
           </View>
@@ -175,6 +344,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               onChangeText={setCode}
               keyboardType="number-pad"
               maxLength={6}
+              error={errors.code}
               icon={
                 <KeyRound color={colors.textLight} size={20} strokeWidth={2} />
               }
@@ -197,6 +367,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               value={newPassword}
               onChangeText={setNewPassword}
               secureTextEntry
+              error={errors.newPassword}
               icon={<Lock color={colors.textLight} size={20} strokeWidth={2} />}
             />
             <Input
@@ -205,6 +376,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
+              error={errors.confirmPassword}
               icon={<Lock color={colors.textLight} size={20} strokeWidth={2} />}
             />
           </View>
@@ -214,7 +386,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
   const renderAction = () => {
     let title = 'Log In Now';
-    let action = onLogin;
+    let action = handleLogin;
 
     if (mode === 'forgot') {
       title = 'Send Verification Code';
@@ -227,7 +399,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       action = handleResetPassword;
     }
 
-    return <Button title={title} onPress={action} style={styles.loginButton} />;
+    return (
+      <Button
+        title={title}
+        onPress={action}
+        style={styles.loginButton}
+        loading={isLoading}
+      />
+    );
   };
 
   return (
@@ -257,7 +436,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           {renderForm()}
           {renderAction()}
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() => changeMode(mode === 'login' ? 'forgot' : 'login')}
             style={styles.backLink}
           >
@@ -266,7 +445,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 ? "Don't have an account? Contact Support"
                 : 'Back to Login Screen'}
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

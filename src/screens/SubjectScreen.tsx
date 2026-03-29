@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { z } from 'zod';
 import {
   View,
   Text,
@@ -78,21 +79,47 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
   onBack,
   onNavigateCourse,
 }) => {
-  const [modalVisible, setModalVisible] = React.useState(false);
-  const [subjectName, setSubjectName] = React.useState('');
-  const [topics, setTopics] = React.useState('');
-  const [chapters, setChapters] = React.useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [subjectName, setSubjectName] = useState('');
+  const [topics, setTopics] = useState('');
+  const [chapters, setChapters] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const subjectSchema = z.object({
+    name: z.string().min(3, 'Subject name must be at least 3 characters'),
+    topics: z.string().min(5, 'Provide a brief topics overview'),
+    chapters: z.string().regex(/^\d+$/, 'Must be a number').refine(v => parseInt(v) > 0, 'At least 1 chapter required'),
+  });
+
+  const validate = () => {
+    try {
+      setErrors({});
+      subjectSchema.parse({ name: subjectName, topics, chapters });
+      return true;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const formattedErrors: Record<string, string> = {};
+        err.issues.forEach(e => {
+          if (e.path[0]) formattedErrors[e.path[0].toString()] = e.message;
+        });
+        setErrors(formattedErrors);
+      }
+      return false;
+    }
+  };
 
   const [activeTab, setActiveTab] = React.useState<'Subjects' | 'Students'>(
     'Subjects',
   );
 
   const handleCreateSubject = () => {
+    if (!validate()) return;
     // Logic to add subject would go here
     setModalVisible(false);
     setSubjectName('');
     setTopics('');
     setChapters('');
+    setErrors({});
   };
 
   const renderSubject = ({ item }: { item: (typeof mockSubjects)[0] }) => (
@@ -202,12 +229,14 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
                   value={subjectName}
                   onChangeText={setSubjectName}
                   autoFocus
+                  error={errors.name}
                 />
                 <Input
                   label="Topics Overview"
                   placeholder="e.g. Algebra, Calculus"
                   value={topics}
                   onChangeText={setTopics}
+                  error={errors.topics}
                 />
                 <Input
                   label="Total Chapters"
@@ -215,6 +244,7 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
                   value={chapters}
                   onChangeText={setChapters}
                   keyboardType="numeric"
+                  error={errors.chapters}
                 />
               </View>
 
