@@ -1,8 +1,5 @@
 import { storageService } from './storageService';
-
-// const BASE_URL = 'http://tutor-coaching-backend.vercel.app';
-const BASE_URL = 'http://192.168.29.69:3000';
-// ';
+import { BASE_URL } from './client';
 
 export const apiCall = async (
   endpoint: string,
