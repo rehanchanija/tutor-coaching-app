@@ -211,13 +211,21 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
           <ChevronRight color={colors.textLight} size={22} strokeWidth={2.5} />
         </View>
 
-        <View style={styles.badgeRow}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.type}</Text>
+        <View style={[styles.badgeRow, { justifyContent: 'space-between', alignItems: 'center' }]}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{item.type}</Text>
+            </View>
+            <View style={styles.studentsContainer}>
+              <Users size={14} color={colors.textLight} />
+              <Text style={styles.studentsText}>{students}</Text>
+            </View>
           </View>
-          <View style={styles.studentsContainer}>
-            <Users size={14} color={colors.textLight} />
-            <Text style={styles.studentsText}>{students}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Calendar size={13} color={colors.textLight} style={{ marginRight: 4 }} />
+            <Text style={{ fontSize: 12, color: colors.textLight, fontWeight: '600' }}>
+              {item.startDate ? new Date(item.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'TBD'} - {item.completionDate ? new Date(item.completionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : 'TBD'}
+            </Text>
           </View>
         </View>
 

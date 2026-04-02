@@ -94,13 +94,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <Users color={colors.textMuted} size={14} />
             <Text style={styles.studentsText}>Active Batch</Text>
             <Text style={styles.separator}>•</Text>
-            <Text style={styles.progressText}>0% Done</Text>
+            <Text style={styles.progressText}>{item.progress ? Math.round(item.progress) : 0}% Done</Text>
           </View>
         </View>
         <ChevronRight color={colors.textMuted} size={20} />
       </View>
       <View style={{ marginTop: spacing.m }}>
-        <ProgressBar progress={0} color={colors.primary} height={6} />
+        <ProgressBar progress={item.progress || 0} color={colors.primary} height={6} />
       </View>
     </Card>
   );
