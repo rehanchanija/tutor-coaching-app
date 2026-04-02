@@ -8,8 +8,11 @@ import {
   Platform,
   TouchableOpacity,
   ScrollView,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   ChevronLeft,
   Sun,
@@ -20,6 +23,8 @@ import {
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { colors, radius, spacing, typography } from '../theme/Theme';
+import { batchService } from '../services/batchService';
+import Toast from 'react-native-toast-message';
 
 interface CreateBatchScreenProps {
   onBack: () => void;
@@ -29,12 +34,24 @@ export const CreateBatchScreen: React.FC<CreateBatchScreenProps> = ({
   onBack,
 }) => {
   const [batchName, setBatchName] = useState('');
-  const [batchType, setBatchType] = useState<'Morning' | 'Evening'>('Morning');
+  const [batchType, setBatchType] = useState<'morning' | 'evening'>('morning');
+  const [startDate, setStartDate] = useState(new Date());
+  const [completionDate, setCompletionDate] = useState(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)); // 3 months default
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showCompletionPicker, setShowCompletionPicker] = useState(false);
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const batchSchema = z.object({
     name: z.string().min(3, 'Batch name must be at least 3 characters'),
   });
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   const validate = () => {
     try {
@@ -53,11 +70,33 @@ export const CreateBatchScreen: React.FC<CreateBatchScreenProps> = ({
     }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!validate()) return;
-    // Mock save
-    console.log('Batch Created', { batchName, batchType });
-    onBack();
+    
+    setIsLoading(true);
+    try {
+      await batchService.create({
+        name: batchName,
+        type: batchType,
+        startDate: startDate.toISOString(),
+        completionDate: completionDate.toISOString(),
+      });
+      
+      Toast.show({
+        type: 'success',
+        text1: 'Batch Created',
+        text2: `${batchName} has been established.`,
+      });
+      onBack();
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Creation Failed',
+        text2: err instanceof Error ? err.message : 'Unknown error occurred',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -80,7 +119,9 @@ export const CreateBatchScreen: React.FC<CreateBatchScreenProps> = ({
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="always"
-          keyboardDismissMode="none"
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+          }
         >
           <View style={styles.formGroup}>
             <Input
@@ -100,21 +141,21 @@ export const CreateBatchScreen: React.FC<CreateBatchScreenProps> = ({
                 activeOpacity={0.8}
                 style={[
                   styles.toggleBtn,
-                  batchType === 'Morning' && styles.activeToggle,
+                  batchType === 'morning' && styles.activeToggle,
                 ]}
-                onPress={() => setBatchType('Morning')}
+                onPress={() => setBatchType('morning')}
               >
                 <Sun
                   size={18}
                   color={
-                    batchType === 'Morning' ? colors.white : colors.textLight
+                    batchType === 'morning' ? colors.white : colors.textLight
                   }
                   strokeWidth={2.5}
                 />
                 <Text
                   style={[
                     styles.toggleText,
-                    batchType === 'Morning' && styles.activeToggleText,
+                    batchType === 'morning' && styles.activeToggleText,
                   ]}
                 >
                   Morning
@@ -125,22 +166,22 @@ export const CreateBatchScreen: React.FC<CreateBatchScreenProps> = ({
                 activeOpacity={0.8}
                 style={[
                   styles.toggleBtn,
-                  batchType === 'Evening' && styles.activeToggle,
+                  batchType === 'evening' && styles.activeToggle,
                   { marginLeft: spacing.m },
                 ]}
-                onPress={() => setBatchType('Evening')}
+                onPress={() => setBatchType('evening')}
               >
                 <Moon
                   size={18}
                   color={
-                    batchType === 'Evening' ? colors.white : colors.textLight
+                    batchType === 'evening' ? colors.white : colors.textLight
                   }
                   strokeWidth={2.5}
                 />
                 <Text
                   style={[
                     styles.toggleText,
-                    batchType === 'Evening' && styles.activeToggleText,
+                    batchType === 'evening' && styles.activeToggleText,
                   ]}
                 >
                   Evening
@@ -148,13 +189,58 @@ export const CreateBatchScreen: React.FC<CreateBatchScreenProps> = ({
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Dates */}
+          <View style={styles.formGroup}>
+            <Text style={styles.fieldLabel}>Start Date</Text>
+            <TouchableOpacity 
+              style={styles.dateSelector} 
+              onPress={() => setShowStartPicker(true)}
+            >
+              <CalendarDays color={colors.primary} size={20} />
+              <Text style={styles.dateText}>{startDate.toDateString()}</Text>
+            </TouchableOpacity>
+            {showStartPicker && (
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                onChange={(event, date) => {
+                  setShowStartPicker(false);
+                  if (date) setStartDate(date);
+                }}
+              />
+            )}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.fieldLabel}>Completion Date</Text>
+            <TouchableOpacity 
+              style={styles.dateSelector} 
+              onPress={() => setShowCompletionPicker(true)}
+            >
+              <CalendarDays color={colors.accent} size={20} />
+              <Text style={styles.dateText}>{completionDate.toDateString()}</Text>
+            </TouchableOpacity>
+            {showCompletionPicker && (
+              <DateTimePicker
+                value={completionDate}
+                mode="date"
+                onChange={(event, date) => {
+                  setShowCompletionPicker(false);
+                  if (date) setCompletionDate(date);
+                }}
+              />
+            )}
+          </View>
+
         </ScrollView>
 
         <View style={styles.footer}>
           <Button
-            title="Create Batch"
+            title="Establish Batch"
             onPress={handleCreate}
             disabled={batchName.trim() === ''}
+            loading={isLoading}
           />
         </View>
       </KeyboardAvoidingView>
@@ -245,5 +331,20 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
     backgroundColor: '#FFFFFF',
+  },
+  dateSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    padding: 16,
+    borderRadius: radius.l,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    gap: 12,
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
   },
 });

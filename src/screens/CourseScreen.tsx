@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import {
   View,
@@ -6,58 +6,69 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, PlayCircle, Plus, X } from 'lucide-react-native';
-import {
+  ActivityIndicator,
+  RefreshControl,
   Modal,
   Pressable,
   Keyboard,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChevronLeft, PlayCircle, Plus, X } from 'lucide-react-native';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { colors, radius, spacing, typography } from '../theme/Theme';
 import { Checkbox } from '../components/Checkbox';
+import { courseService, Course } from '../services/courseService';
+import Toast from 'react-native-toast-message';
 
 interface CourseScreenProps {
+  subjectId: string;
   onBack: () => void;
 }
 
-interface ChapterItem {
-  id: string;
-  name: string;
-  lectures: number;
-  status: 'Done' | 'In Progress' | 'Locked';
-}
-
-const initialChapters: ChapterItem[] = [
-  { id: '1', name: 'Quadratic Equations', lectures: 3, status: 'Done' },
-  { id: '2', name: 'Trigonometry', lectures: 4, status: 'Done' },
-  { id: '3', name: 'Calculus Basics', lectures: 3, status: 'In Progress' },
-  { id: '4', name: 'Coordinate Geometry', lectures: 4, status: 'Locked' },
-  { id: '5', name: 'Probability', lectures: 2, status: 'Locked' },
-];
-
-export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
-  const [chapters, setChapters] = useState<ChapterItem[]>(initialChapters);
+export const CourseScreen: React.FC<CourseScreenProps> = ({ subjectId, onBack }) => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [chapterName, setChapterName] = useState('');
   const [lectureCount, setLectureCount] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    fetchCourses();
+  }, [subjectId]);
+
+  const fetchCourses = async () => {
+    setIsLoading(true);
+    try {
+      const data = await courseService.getBySubject(subjectId);
+      setCourses(data);
+    } catch (err) {
+      console.error('Error fetching courses', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    fetchCourses();
+  };
+
   const chapterSchema = z.object({
     name: z.string().min(3, 'Chapter name must be at least 3 characters'),
-    lectures: z.string().regex(/^\d+$/, 'Must be a number').refine(v => parseInt(v) > 0, 'At least 1 lecture required'),
   });
 
   const validate = () => {
     try {
       setErrors({});
-      chapterSchema.parse({ name: chapterName, lectures: lectureCount });
+      chapterSchema.parse({ name: chapterName });
       return true;
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -71,71 +82,60 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
     }
   };
 
-  const toggleStatus = (id: string) => {
-    setChapters(prev =>
-      prev.map(ch => {
-        if (ch.id === id) {
-          return {
-            ...ch,
-            status: ch.status === 'Done' ? 'In Progress' : 'Done',
-          };
-        }
-        return ch;
-      }),
-    );
+  const toggleStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const updated = await courseService.updateProgress(id, !currentStatus);
+      setCourses(prev => prev.map(c => c._id === id ? updated : c));
+    } catch (err) {
+      console.error('Failed to update status', err);
+    }
   };
 
-  const handleCreateChapter = () => {
+  const handleCreateChapter = async () => {
     if (!validate()) return;
-    const newChapter: ChapterItem = {
-      id: Math.random().toString(),
-      name: chapterName,
-      lectures: parseInt(lectureCount) || 1,
-      status: 'In Progress',
-    };
-    setChapters([...chapters, newChapter]);
-    setModalVisible(false);
-    setChapterName('');
-    setLectureCount('');
-    setErrors({});
+    
+    setIsLoading(true);
+    try {
+      await courseService.create({
+        name: chapterName,
+        subjectId: subjectId,
+      });
+
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Chapter created successfully!',
+      });
+      
+      setModalVisible(false);
+      setChapterName('');
+      setLectureCount('');
+      setErrors({});
+      fetchCourses();
+    } catch (err) {
+      console.error('Failed to create chapter', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const totalChapters = chapters.length;
-  const completedChapters = chapters.filter(ch => ch.status === 'Done').length;
-  const progressPercent =
-    totalChapters > 0
-      ? Math.round((completedChapters / totalChapters) * 100)
-      : 0;
+  const totalChapters = courses.length;
+  const completedChapters = courses.filter(ch => ch.isCompleted).length;
+  const progressPercent = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
 
-  const renderChapter = ({
-    item,
-    index,
-  }: {
-    item: ChapterItem;
-    index: number;
-  }) => (
+  const renderChapter = ({ item, index }: { item: Course; index: number }) => (
     <TouchableOpacity
       style={styles.chapterItem}
-      onPress={() => item.status !== 'Locked' && toggleStatus(item.id)}
+      onPress={() => toggleStatus(item._id, item.isCompleted)}
       activeOpacity={0.8}
-      disabled={item.status === 'Locked'}
     >
       <View
         style={[
           styles.chapterNumberCircle,
-          item.status === 'Done' || item.status === 'In Progress'
-            ? { backgroundColor: colors.primaryLight }
-            : { backgroundColor: colors.background },
+          item.isCompleted ? { backgroundColor: colors.primaryLight } : { backgroundColor: colors.background },
         ]}
       >
-        <Text
-          style={[
-            styles.chapterNumberText,
-            item.status === 'Done' || item.status === 'In Progress'
-              ? { color: colors.text }
-              : { color: colors.textLight },
-          ]}
-        >
+        <Text style={[styles.chapterNumberText, item.isCompleted ? { color: colors.text } : { color: colors.textLight }]}>
           {index + 1}
         </Text>
       </View>
@@ -144,21 +144,20 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
         <Text
           style={[
             styles.chapterName,
-            item.status === 'Done' && styles.completedChapterName,
-            item.status === 'Locked' && { color: '#CBD5E1' },
+            item.isCompleted && styles.completedChapterName,
           ]}
         >
           {item.name}
         </Text>
         <Text style={styles.chapterSubtext}>
-          {item.lectures} Lectures • {item.status}
+          {item.isCompleted ? 'Completed' : 'Pending'}
         </Text>
       </View>
 
       <View style={styles.statusIconBox}>
         <Checkbox
-          checked={item.status === 'Done'}
-          onChange={() => toggleStatus(item.id)}
+          checked={item.isCompleted}
+          onChange={() => toggleStatus(item._id, item.isCompleted)}
         />
       </View>
     </TouchableOpacity>
@@ -170,7 +169,7 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
             <ChevronLeft color="#64748B" size={24} strokeWidth={3} />
-            <Text style={styles.headerBreadcrumb}>Mathematics — JEE A</Text>
+            <Text style={styles.headerBreadcrumb}>Subject Content</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setModalVisible(true)}
@@ -260,13 +259,22 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ onBack }) => {
         </View>
       </SafeAreaView>
 
-      <FlatList
-        data={chapters}
-        renderItem={renderChapter}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading && !isRefreshing ? (
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={courses}
+          renderItem={renderChapter}
+          keyExtractor={item => item._id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+          }
+        />
+      )}
     </View>
   );
 };

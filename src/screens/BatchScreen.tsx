@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import {
   View,
@@ -14,6 +14,8 @@ import {
   Pressable,
   ScrollView,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -33,59 +35,19 @@ import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
 import { colors, radius, spacing, typography } from '../theme/Theme';
+import { batchService, Batch } from '../services/batchService';
+import Toast from 'react-native-toast-message';
 
 interface BatchScreenProps {
   onNavigateSubject: (batchId: string) => void;
 }
 
-const allBatches = [
-  {
-    id: '1',
-    name: 'React Native Basics',
-    type: 'Morning',
-    progress: 80,
-    students: 25,
-  },
-  {
-    id: '2',
-    name: 'Advanced JavaScript',
-    type: 'Morning',
-    progress: 45,
-    students: 18,
-  },
-  {
-    id: '3',
-    name: 'UI/UX Design',
-    type: 'Evening',
-    progress: 20,
-    students: 30,
-  },
-  {
-    id: '4',
-    name: 'Node.js Backend',
-    type: 'Evening',
-    progress: 90,
-    students: 22,
-  },
-  {
-    id: '5',
-    name: 'Flutter Development',
-    type: 'Morning',
-    progress: 10,
-    students: 30,
-  },
-  {
-    id: '6',
-    name: 'Python for Data Science',
-    type: 'Evening',
-    progress: 60,
-    students: 40,
-  },
-];
-
 export const BatchScreen: React.FC<BatchScreenProps> = ({
   onNavigateSubject,
 }) => {
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setModalVisible] = useState(false);
   const [batchName, setBatchName] = useState('');
@@ -99,6 +61,32 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetchBatches();
+  }, []);
+
+  const fetchBatches = async () => {
+    try {
+      const data = await batchService.getAll();
+      setBatches(data);
+    } catch (err) {
+      console.error('Failed to fetch batches', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Fetch Error',
+        text2: 'Could not load batches.',
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    fetchBatches();
+  };
 
   const batchSchema = z.object({
     name: z.string().min(3, 'Batch name must be at least 3 characters'),
@@ -126,42 +114,70 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
       return false;
     }
   };
+
+  const handleCreateBatch = async () => {
+    if (!validate()) return;
+    
+    setIsLoading(true);
+    try {
+      // Parse DD/MM/YYYY to ISO
+      const [sd, sm, sy] = startDate.split('/').map(Number);
+      const [cd, cm, cy] = completionDate.split('/').map(Number);
+      
+      const sIso = new Date(sy, sm - 1, sd).toISOString();
+      const cIso = new Date(cy, cm - 1, cd).toISOString();
+
+      await batchService.create({
+        name: batchName,
+        type: batchType.toLowerCase() as 'morning' | 'evening',
+        startDate: sIso,
+        completionDate: cIso,
+      });
+
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Batch created successfully!',
+      });
+      
+      setModalVisible(false);
+      setBatchName('');
+      setBatchType('Morning');
+      setStartDate('');
+      setCompletionDate('');
+      setErrors({});
+      fetchBatches();
+    } catch (err) {
+      console.error('Failed to create batch', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Creation Error',
+        text2: 'Could not create batch. Please try again.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const [showYearSelector, setShowYearSelector] = useState(false);
   const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
-  const filteredBatches = allBatches.filter(batch =>
+  const filteredBatches = batches.filter(batch =>
     batch.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleCreateBatch = () => {
-    if (!validate()) return;
-    setModalVisible(false);
-    setBatchName('');
-    setBatchType('Morning');
-    setStartDate('');
-    setCompletionDate('');
-    setErrors({});
-  };
-
-  const renderBatch = ({ item }: { item: (typeof allBatches)[0] }) => {
-    const isComplete = item.progress >= 100;
+  const renderBatch = ({ item }: { item: Batch }) => {
+    // Backend doesn't provide progress/students count yet, using mock defaults
+    const progress = 0; 
+    const students = 0;
+    const isComplete = progress >= 100;
     const statusText = isComplete ? 'Complete' : 'Active';
 
     return (
-      <Card onPress={() => onNavigateSubject(item.id)} style={styles.batchCard}>
+      <Card onPress={() => onNavigateSubject(item._id)} style={styles.batchCard}>
         <View style={styles.headerRow}>
           <View style={styles.titleWrapper}>
             <View style={styles.iconCircle}>
@@ -185,7 +201,7 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
           </View>
           <View style={styles.studentsContainer}>
             <Users size={14} color={colors.textLight} />
-            <Text style={styles.studentsText}>{item.students}</Text>
+            <Text style={styles.studentsText}>{students}</Text>
           </View>
         </View>
 
@@ -213,10 +229,10 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
                 { fontWeight: '800', color: colors.text, fontSize: 13 },
               ]}
             >
-              {item.progress}%
+              {progress}%
             </Text>
           </View>
-          <ProgressBar progress={item.progress} color={colors.primary} height={6} />
+          <ProgressBar progress={progress} color={colors.primary} height={6} />
         </View>
       </Card>
     );
@@ -252,13 +268,22 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
           />
         </View>
 
-        <FlatList
-          data={filteredBatches}
-          keyExtractor={item => item.id}
-          renderItem={renderBatch}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        {isLoading && !isRefreshing ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredBatches}
+            keyExtractor={item => item._id}
+            renderItem={renderBatch}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+            }
+          />
+        )}
 
         <Modal
           visible={isModalVisible}
@@ -556,10 +581,11 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
                                     const startD = new Date(sy, sm - 1, sd);
 
                                     if (selectedDate < startD) {
-                                      Alert.alert(
-                                        'Invalid Date',
-                                        'Completion date cannot be before Start date!',
-                                      );
+                                      Toast.show({
+                                        type: 'error',
+                                        text1: 'Invalid Date',
+                                        text2: 'Completion date cannot be before Start date!',
+                                      });
                                       return;
                                     }
                                   }

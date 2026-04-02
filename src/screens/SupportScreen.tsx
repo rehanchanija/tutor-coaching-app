@@ -9,6 +9,7 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -63,6 +64,12 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   onNavigateChat,
 }) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   const handleEmail = () => {
     Linking.openURL('mailto:rehanchanija@gmail.com');
@@ -78,6 +85,9 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+        }
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>

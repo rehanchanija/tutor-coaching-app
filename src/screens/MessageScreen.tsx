@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -37,6 +38,12 @@ interface MessageScreenProps {
 
 export const MessageScreen: React.FC<MessageScreenProps> = ({ onNavigateChat }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   const batchChats: BatchChatPreview[] = [
     {
@@ -104,7 +111,13 @@ export const MessageScreen: React.FC<MessageScreenProps> = ({ onNavigateChat }) 
         />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+        }
+      >
         {filteredChats.map((chat) => (
           <TouchableOpacity
             key={chat.id}

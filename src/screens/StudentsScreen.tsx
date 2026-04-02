@@ -13,6 +13,7 @@ import {
   ScrollView,
   Pressable,
   Keyboard,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -97,7 +98,13 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isBatchPickerVisible, setBatchPickerVisible] = useState(false);
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   // Form State
   const [name, setName] = useState('');
@@ -234,6 +241,9 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
           renderItem={renderStudent}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+          }
         />
 
         {/* Add Student Modal */}

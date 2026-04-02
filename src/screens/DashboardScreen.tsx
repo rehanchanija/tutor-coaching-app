@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ViewStyle,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -20,6 +22,8 @@ import {
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
 import { colors, radius, spacing, typography } from '../theme/Theme';
+import { dashboardService, DashboardStats } from '../services/dashboardService';
+import { batchService, Batch } from '../services/batchService';
 
 interface DashboardScreenProps {
   onNavigateBatch: (batchId: string) => void;
@@ -27,53 +31,46 @@ interface DashboardScreenProps {
   userName?: string;
 }
 
-const mockBatches = [
-  {
-    id: '1',
-    name: 'React Native Basics',
-    type: 'Morning',
-    progress: 80,
-    students: 25,
-  },
-  {
-    id: '2',
-    name: 'Advanced JavaScript',
-    type: 'Morning',
-    progress: 45,
-    students: 18,
-  },
-  {
-    id: '3',
-    name: 'UI/UX Design',
-    type: 'Evening',
-    progress: 20,
-    students: 30,
-  },
-  {
-    id: '4',
-    name: 'Node.js Backend',
-    type: 'Evening',
-    progress: 90,
-    students: 22,
-  },
-];
-
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateBatch,
   onNavigateNotifications,
   userName = 'Admin',
 }) => {
+  const [stats, setStats] = useState<DashboardStats>({ totalBatches: 0, totalStudents: 0 });
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<'Morning' | 'Evening'>('Morning');
 
-  const filteredBatches = mockBatches.filter(b => b.type === filter);
-  const totalStudents = mockBatches.reduce(
-    (acc, curr) => acc + curr.students,
-    0,
-  );
-  const totalBatches = mockBatches.length;
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const renderBatch = ({ item }: { item: (typeof mockBatches)[0] }) => (
-    <Card onPress={() => onNavigateBatch(item.id)} style={styles.batchCard}>
+  const fetchData = async () => {
+    try {
+      const [statsData, batchesData] = await Promise.all([
+        dashboardService.getStats(),
+        batchService.getAll(),
+      ]);
+      setStats(statsData);
+      setBatches(batchesData);
+    } catch (err) {
+      console.error('Failed to fetch dashboard data', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    fetchData();
+  };
+
+  const filteredBatches = batches.filter(b => b.type === filter);
+
+  const renderBatch = ({ item }: { item: Batch }) => (
+    <Card onPress={() => onNavigateBatch(item._id)} style={styles.batchCard}>
       <View style={styles.batchContainer}>
         <View style={styles.iconCircle}>
           <LibraryBig color={colors.primary} size={22} strokeWidth={2.5} />
@@ -84,16 +81,16 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </Text>
           <View style={styles.batchMeta}>
             <Users color={colors.textMuted} size={14} />
-            <Text style={styles.studentsText}>{item.students} Students</Text>
+            <Text style={styles.studentsText}>Active Batch</Text>
             <Text style={styles.separator}>•</Text>
-            <Text style={styles.progressText}>{item.progress}% Done</Text>
+            <Text style={styles.progressText}>0% Done</Text>
           </View>
         </View>
         <ChevronRight color={colors.textMuted} size={20} />
       </View>
       <View style={{ marginTop: spacing.m }}>
         <ProgressBar
-          progress={item.progress}
+          progress={0}
           color={colors.primary}
           height={6}
         />
@@ -106,7 +103,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <View style={styles.container}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Good Morning,</Text>
+            <Text style={styles.greeting}>Elite Coaching,</Text>
             <Text style={typography.h1}>{userName}</Text>
           </View>
           <TouchableOpacity 
@@ -124,14 +121,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             style={[styles.statCardGrid, { backgroundColor: colors.accent }]}
           >
             <Layers color="#FFF" size={24} />
-            <Text style={styles.statGridValue}>{totalBatches}</Text>
+            <Text style={styles.statGridValue}>{stats.totalBatches}</Text>
             <Text style={styles.statGridLabel}>Total Batches</Text>
           </Card>
           <Card
             style={[styles.statCardGrid, { backgroundColor: colors.primary }]}
           >
             <Users color="#FFF" size={24} />
-            <Text style={styles.statGridValue}>{totalStudents}</Text>
+            <Text style={styles.statGridValue}>{stats.totalStudents}</Text>
             <Text style={styles.statGridLabel}>Total Students</Text>
           </Card>
         </View>
@@ -145,7 +142,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             >
               <Sun
                 size={14}
-                color={filter === 'Morning' ? '#FFF' : colors.textLight}
+                color={filter === 'Morning' ? colors.primary : colors.textLight}
               />
               <Text
                 style={[
@@ -162,7 +159,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             >
               <Moon
                 size={14}
-                color={filter === 'Evening' ? '#FFF' : colors.textLight}
+                color={filter === 'Evening' ? colors.primary : colors.textLight}
               />
               <Text
                 style={[
@@ -176,13 +173,22 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </View>
         </View>
 
-        <FlatList
-          data={filteredBatches}
-          keyExtractor={item => item.id}
-          renderItem={renderBatch}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        {isLoading && !isRefreshing ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredBatches}
+            keyExtractor={item => item._id}
+            renderItem={renderBatch}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );

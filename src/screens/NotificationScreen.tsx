@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   ChevronLeft, 
@@ -70,6 +70,12 @@ interface NotificationScreenProps {
 }
 
 export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
   const renderIcon = (type: NotificationItem['type']) => {
     const size = 20;
     const strokeWidth = 2.5;
@@ -117,6 +123,9 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={<Text style={styles.sectionLabel}>Recent Activity</Text>}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+        }
       />
     </SafeAreaView>
   );

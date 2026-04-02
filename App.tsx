@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -18,6 +18,7 @@ import { MessageScreen } from './src/screens/MessageScreen';
 import { BatchChatScreen } from './src/screens/BatchChatScreen';
 import { TabBar } from './src/components/TabBar';
 import { colors } from './src/theme/Theme';
+import { storageService } from './src/services/storageService';
 import Toast from 'react-native-toast-message';
 
 type ScreenName = 'Login' | 'Main' | 'Subject' | 'Course' | 'StudentDetail' | 'Notifications' | 'Support' | 'Privacy' | 'ChatSupport' | 'BatchChat';
@@ -31,6 +32,32 @@ const App = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [selectedBatchChat, setSelectedBatchChat] = useState<{id: string, name: string} | null>(null);
   const [userData, setUserData] = useState<any>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        console.log('--- APP BOOT: Checking Authentication ---');
+        const session = await storageService.getSession();
+        console.log('--- APP BOOT: Session Result:', !!session);
+        
+        if (session && session.token) {
+          console.log('--- APP BOOT: Auto-Login Success ---');
+          setUserData(session.user);
+          setIsAuthenticated(true);
+          setCurrentScreen('Main');
+        } else {
+          console.log('--- APP BOOT: Auto-Login Failed (No Session) ---');
+        }
+      } catch (e) {
+        console.error('--- APP BOOT ERROR: Auth check failed ---', e);
+      } finally {
+        setTimeout(() => setIsInitialLoading(false), 500); // Small delay to avoid flash
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const handleLogin = (data: any) => {
     setIsAuthenticated(true);
@@ -38,7 +65,8 @@ const App = () => {
     setCurrentScreen('Main');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await storageService.removeToken();
     setIsAuthenticated(false);
     setCurrentScreen('Login');
     setActiveTab('Dashboard');
@@ -46,6 +74,7 @@ const App = () => {
     setSelectedBatchId(null);
     setSelectedSubjectId(null);
   };
+
 
   const handleNavigateBatch = (batchId: string) => {
     setSelectedBatchId(batchId);
@@ -58,6 +87,10 @@ const App = () => {
   };
 
   const renderScreen = () => {
+    if (isInitialLoading) {
+      return null; // Keep screen clean while checking auth
+    }
+
     if (!isAuthenticated || currentScreen === 'Login') {
       return <LoginScreen onLogin={handleLogin} />;
     }
@@ -65,6 +98,7 @@ const App = () => {
     if (currentScreen === 'Subject') {
       return (
         <SubjectScreen
+          batchId={selectedBatchId || ''}
           onBack={() => setCurrentScreen('Main')}
           onNavigateCourse={handleNavigateSubject}
         />
@@ -74,6 +108,7 @@ const App = () => {
     if (currentScreen === 'Course') {
       return (
         <CourseScreen
+          subjectId={selectedSubjectId || ''}
           onBack={() => setCurrentScreen('Subject')}
         />
       );
