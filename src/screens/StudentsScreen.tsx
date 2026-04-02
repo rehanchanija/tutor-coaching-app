@@ -26,6 +26,8 @@ import {
   MapPin,
   ChevronDown,
   Layers,
+  Eye,
+  EyeOff,
 } from 'lucide-react-native';
 import { colors, spacing, typography, radius } from '../theme/Theme';
 import { Input } from '../components/Input';
@@ -50,6 +52,7 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isBatchPickerVisible, setBatchPickerVisible] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form State
   const [name, setName] = useState('');
@@ -74,7 +77,11 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
       setStudents(stuData);
       setBatches(batchData);
     } catch (err) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to load student data.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load student data.',
+      });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -98,13 +105,13 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
   const validate = () => {
     try {
       setErrors({});
-      studentSchema.parse({ 
-        name, 
-        email, 
-        password, 
-        phone, 
-        address, 
-        batchId: selectedBatch?._id 
+      studentSchema.parse({
+        name,
+        email,
+        password,
+        phone,
+        address,
+        batchId: selectedBatch?._id,
       });
       return true;
     } catch (err) {
@@ -113,7 +120,10 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
         err.issues.forEach(e => {
           if (e.path[0]) {
             formattedErrors[e.path[0].toString()] = e.message;
-            console.log(`[StudentsScreen] Validation failed for field "${e.path[0]}":`, e.message);
+            console.log(
+              `[StudentsScreen] Validation failed for field "${e.path[0]}":`,
+              e.message,
+            );
           }
         });
         setErrors(formattedErrors);
@@ -160,10 +170,14 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
         batchId: selectedBatch?._id,
       };
       console.log('[StudentsScreen] Creating student with data:', studentData);
-      
+
       await studentService.create(studentData);
 
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Student added successfully!' });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Student added successfully!',
+      });
       setModalVisible(false);
       // Reset form
       setName('');
@@ -174,10 +188,10 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
       setSelectedBatch(null);
       fetchInitialData();
     } catch (err: any) {
-      Toast.show({ 
-        type: 'error', 
-        text1: 'Error', 
-        text2: err?.message || 'Could not add student.' 
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: err?.message || 'Could not add student.',
       });
     } finally {
       setIsLoading(false);
@@ -187,7 +201,26 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
   const renderStudent = ({ item }: { item: User }) => {
     const avatarBg = '#EEF2FF';
     const avatarColor = '#0F172A';
-    const batchName = typeof item.batchId === 'object' ? item.batchId?.name : (batches.find(b => b._id === item.batchId)?.name || 'Unassigned');
+
+    let batchName = 'Unassigned';
+    let batchType = '';
+
+    if (typeof item.batchId === 'object' && item.batchId) {
+      batchName = item.batchId.name || 'Unassigned';
+      batchType = item.batchId.type || '';
+    } else {
+      const bOption = batches.find(b => b._id === item.batchId);
+      if (bOption) {
+        batchName = bOption.name;
+        batchType = bOption.type;
+      }
+    }
+
+    if (batchType && batchName !== 'Unassigned') {
+      batchName = `${batchName} (${
+        batchType.charAt(0).toUpperCase() + batchType.slice(1)
+      })`;
+    }
 
     return (
       <TouchableOpacity
@@ -200,18 +233,13 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
             {getInitials(item.name)}
           </Text>
         </View>
-190: 
+        190:
         <View style={styles.info}>
           <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.subtitle}>
-            {batchName} • {item.address}
-          </Text>
+          <Text style={styles.subtitle}>{batchName}</Text>
         </View>
-
         <View style={[styles.statusBadge, { backgroundColor: '#ECFDF5' }]}>
-          <Text style={[styles.statusText, { color: '#059669' }]}>
-            Active
-          </Text>
+          <Text style={[styles.statusText, { color: '#059669' }]}>Active</Text>
         </View>
       </TouchableOpacity>
     );
@@ -250,19 +278,28 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
         </View>
 
         {isLoading && students.length === 0 ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator
+            size="large"
+            color={colors.primary}
+            style={{ marginTop: 40 }}
+          />
         ) : (
           <FlatList
-            data={students.filter(s => 
-              s.role === 'student' && 
-              s.name.toLowerCase().includes(searchQuery.toLowerCase())
+            data={students.filter(
+              s =>
+                s.role === 'student' &&
+                s.name.toLowerCase().includes(searchQuery.toLowerCase()),
             )}
             keyExtractor={item => item._id}
             renderItem={renderStudent}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                colors={[colors.primary]}
+              />
             }
           />
         )}
@@ -326,7 +363,18 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                     placeholder="Enter min 6 characters"
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
+                    rightIcon={
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff size={20} color={colors.textMuted} />
+                        ) : (
+                          <Eye size={20} color={colors.textMuted} />
+                        )}
+                      </TouchableOpacity>
+                    }
                     error={errors.password}
                   />
 
@@ -364,7 +412,16 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                           },
                         ]}
                       >
-                        {selectedBatch?.name || 'Unassigned'}
+                        {selectedBatch
+                          ? `${selectedBatch.name} ${
+                              selectedBatch.type
+                                ? '(' +
+                                  selectedBatch.type.charAt(0).toUpperCase() +
+                                  selectedBatch.type.slice(1) +
+                                  ')'
+                                : ''
+                            }`
+                          : 'Unassigned'}
                       </Text>
                     </View>
                     <ChevronDown size={20} color={colors.textMuted} />
@@ -405,7 +462,12 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                     setBatchPickerVisible(false);
                   }}
                 >
-                  <Text style={[styles.pickerItemText, !selectedBatch && styles.selectedItemText]}>
+                  <Text
+                    style={[
+                      styles.pickerItemText,
+                      !selectedBatch && styles.selectedItemText,
+                    ]}
+                  >
                     Unassigned
                   </Text>
                 </TouchableOpacity>
@@ -421,10 +483,17 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                     <Text
                       style={[
                         styles.pickerItemText,
-                        selectedBatch?._id === batch._id && styles.selectedItemText,
+                        selectedBatch?._id === batch._id &&
+                          styles.selectedItemText,
                       ]}
                     >
-                      {batch.name}
+                      {batch.name}{' '}
+                      {batch.type
+                        ? `(${
+                            batch.type.charAt(0).toUpperCase() +
+                            batch.type.slice(1)
+                          })`
+                        : ''}
                     </Text>
                   </TouchableOpacity>
                 ))}

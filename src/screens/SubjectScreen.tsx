@@ -28,6 +28,8 @@ import {
   Plus,
   X,
   Book,
+  Eye,
+  EyeOff,
 } from 'lucide-react-native';
 import { Card } from '../components/Card';
 import { ProgressBar } from '../components/ProgressBar';
@@ -63,6 +65,7 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
   const [batches, setBatches] = useState<Batch[]>([]);
   const [selectedBatchForStudent, setSelectedBatchForStudent] = useState<Batch | null>(null);
   const [isBatchPickerVisible, setBatchPickerVisible] = useState(false);
+  const [showStudentPassword, setShowStudentPassword] = useState(false);
 
   // Input states for Modal
   const [modalVisible, setModalVisible] = useState(false);
@@ -509,7 +512,12 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
                     placeholder="Default: 123456"
                     value={studentPassword}
                     onChangeText={setStudentPassword}
-                    secureTextEntry
+                    secureTextEntry={!showStudentPassword}
+                    rightIcon={
+                      <TouchableOpacity onPress={() => setShowStudentPassword(!showStudentPassword)}>
+                        {showStudentPassword ? <EyeOff size={20} color={colors.textMuted} /> : <Eye size={20} color={colors.textMuted} />}
+                      </TouchableOpacity>
+                    }
                   />
 
                   <Text style={[styles.modalTitle, { fontSize: 14, marginBottom: 8, marginTop: 10, color: colors.text }]}>

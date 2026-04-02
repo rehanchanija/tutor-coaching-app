@@ -10,6 +10,8 @@ export interface User {
   password?: string;
   batchId?: any; // can be string or object
   image?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const studentService = {

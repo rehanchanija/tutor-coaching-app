@@ -184,9 +184,8 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
   );
 
   const renderBatch = ({ item }: { item: Batch }) => {
-    // Backend doesn't provide progress/students count yet, using mock defaults
-    const progress = 0;
-    const students = 0;
+    const progress = item.progress ? Math.round(item.progress) : 0;
+    const students = 0; // Pending backend support
     const isComplete = progress >= 100;
     const statusText = isComplete ? 'Complete' : 'Active';
 

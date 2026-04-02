@@ -37,7 +37,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateNotifications,
   userName = 'Admin',
 }) => {
-  const [stats, setStats] = useState<DashboardStats>({ totalBatches: 0, totalStudents: 0 });
+  const [stats, setStats] = useState<DashboardStats>({
+    totalBatches: 0,
+    totalStudents: 0,
+  });
   const [batches, setBatches] = useState<Batch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -75,7 +78,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const filteredBatches = batches.filter(b => b.type === filter);
 
   const renderBatch = ({ item }: { item: Batch }) => (
-    <Card onPress={() => onNavigateBatch(item._id, item.name)} style={styles.batchCard}>
+    <Card
+      onPress={() => onNavigateBatch(item._id, item.name)}
+      style={styles.batchCard}
+    >
       <View style={styles.batchContainer}>
         <View style={styles.iconCircle}>
           <LibraryBig color={colors.primary} size={22} strokeWidth={2.5} />
@@ -94,11 +100,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <ChevronRight color={colors.textMuted} size={20} />
       </View>
       <View style={{ marginTop: spacing.m }}>
-        <ProgressBar
-          progress={0}
-          color={colors.primary}
-          height={6}
-        />
+        <ProgressBar progress={0} color={colors.primary} height={6} />
       </View>
     </Card>
   );
@@ -108,11 +110,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <View style={styles.container}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Elite Coaching,</Text>
+            <Text style={styles.greeting}>SRK Coaching,</Text>
             <Text style={typography.h1}>{userName}</Text>
           </View>
-          <TouchableOpacity 
-            style={styles.notifBadge} 
+          <TouchableOpacity
+            style={styles.notifBadge}
             activeOpacity={0.8}
             onPress={onNavigateNotifications}
           >
@@ -190,7 +192,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                colors={[colors.primary]}
+              />
             }
           />
         )}

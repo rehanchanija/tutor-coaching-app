@@ -6,6 +6,7 @@ export interface Batch {
   type: 'morning' | 'evening';
   startDate: string; // ISO Date
   completionDate: string; // ISO Date
+  progress?: number;
 }
 
 export const batchService = {

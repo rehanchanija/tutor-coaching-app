@@ -32,6 +32,7 @@ const App = () => {
   const [selectedBatchName, setSelectedBatchName] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [selectedBatchChat, setSelectedBatchChat] = useState<{id: string, name: string} | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
@@ -84,6 +85,11 @@ const App = () => {
     setCurrentScreen('Subject');
   };
 
+  const handleNavigateStudent = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setCurrentScreen('StudentDetail');
+  };
+
   const handleNavigateSubject = (subjectId: string) => {
     setSelectedSubjectId(subjectId);
     setCurrentScreen('Course');
@@ -121,7 +127,7 @@ const App = () => {
     if (currentScreen === 'StudentDetail') {
       return (
         <StudentDetailScreen 
-          studentId="1" // Mock for now
+          studentId={selectedStudentId || ''} 
           onBack={() => setCurrentScreen('Main')} 
         />
       );
@@ -183,7 +189,7 @@ const App = () => {
       case 'Batches':
         return <BatchScreen onNavigateSubject={handleNavigateBatch} />;
       case 'Students':
-        return <StudentsScreen onNavigateStudent={(id) => setCurrentScreen('StudentDetail')} />;
+        return <StudentsScreen onNavigateStudent={handleNavigateStudent} />;
       case 'Profile':
         return (
           <ProfileScreen 
