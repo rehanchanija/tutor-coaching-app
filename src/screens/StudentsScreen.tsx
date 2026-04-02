@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import {
   View,
@@ -14,6 +14,7 @@ import {
   Pressable,
   Keyboard,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -31,63 +32,9 @@ import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 
-const mockStudents = [
-  {
-    id: '1',
-    name: 'Aarav Sharma',
-    batch: 'JEE A',
-    roll: '01',
-    status: 'Active',
-    avatarBg: '#EEF2FF',
-    avatarColor: '#0F172A',
-  },
-  {
-    id: '2',
-    name: 'Priya Gupta',
-    batch: 'NEET B',
-    roll: '07',
-    status: 'Fee Due',
-    avatarBg: '#FEF3C7',
-    avatarColor: '#D97706',
-  },
-  {
-    id: '3',
-    name: 'Rohan Verma',
-    batch: 'JEE A',
-    roll: '03',
-    status: 'Active',
-    avatarBg: '#ECFDF5',
-    avatarColor: '#059669',
-  },
-  {
-    id: '4',
-    name: 'Sneha Mishra',
-    batch: 'Foundation',
-    roll: '12',
-    status: 'Inactive',
-    avatarBg: '#EEF2FF',
-    avatarColor: '#0F172A',
-  },
-  {
-    id: '5',
-    name: 'Arjun Kumar',
-    batch: 'NEET B',
-    roll: '14',
-    status: 'Active',
-    avatarBg: '#ECFDF5',
-    avatarColor: '#059669',
-  },
-];
-
-const availableBatches = [
-  'React Native Basics',
-  'Advanced JavaScript',
-  'UI/UX Design',
-  'Node.js Backend',
-  'Foundation',
-  'JEE A',
-  'NEET B',
-];
+import { studentService, User } from '../services/studentService';
+import { batchService, Batch } from '../services/batchService';
+import Toast from 'react-native-toast-message';
 
 interface StudentsScreenProps {
   onNavigateStudent: (id: string) => void;
@@ -98,40 +45,76 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setModalVisible] = useState(false);
+  const [students, setStudents] = useState<User[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isBatchPickerVisible, setBatchPickerVisible] = useState(false);
 
-  const onRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 800);
-  };
-
   // Form State
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState('Select Batch');
+  const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  const fetchInitialData = async () => {
+    setIsLoading(true);
+    try {
+      const [stuData, batchData] = await Promise.all([
+        studentService.getAll(),
+        batchService.getAll(),
+      ]);
+      setStudents(stuData);
+      setBatches(batchData);
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to load student data.' });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    fetchInitialData();
+  };
 
   const studentSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
     phone: z.string().min(10, 'Phone number must be at least 10 digits'),
     address: z.string().min(5, 'Address must be at least 5 characters'),
-    batch: z.string().refine(val => val !== 'Select Batch', {
-      message: 'Please select a batch',
-    }),
+    batchId: z.string().optional(),
   });
 
   const validate = () => {
     try {
       setErrors({});
-      studentSchema.parse({ name, phone, address, batch: selectedBatch });
+      studentSchema.parse({ 
+        name, 
+        email, 
+        password, 
+        phone, 
+        address, 
+        batchId: selectedBatch?._id 
+      });
       return true;
     } catch (err) {
       if (err instanceof z.ZodError) {
         const formattedErrors: Record<string, string> = {};
         err.issues.forEach(e => {
-          if (e.path[0]) formattedErrors[e.path[0].toString()] = e.message;
+          if (e.path[0]) {
+            formattedErrors[e.path[0].toString()] = e.message;
+            console.log(`[StudentsScreen] Validation failed for field "${e.path[0]}":`, e.message);
+          }
         });
         setErrors(formattedErrors);
       }
@@ -161,41 +144,73 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
     }
   };
 
-  const handleAddStudent = () => {
-    if (!validate()) return;
-    setModalVisible(false);
-    // Reset form
-    setName('');
-    setAddress('');
-    setPhone('');
-    setSelectedBatch('Select Batch');
+  const handleAddStudent = async () => {
+    if (!validate()) {
+      console.log('[StudentsScreen] Validation failed');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const studentData = {
+        name,
+        email,
+        password,
+        phone,
+        address,
+        batchId: selectedBatch?._id,
+      };
+      console.log('[StudentsScreen] Creating student with data:', studentData);
+      
+      await studentService.create(studentData);
+
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Student added successfully!' });
+      setModalVisible(false);
+      // Reset form
+      setName('');
+      setEmail('');
+      setPassword('');
+      setAddress('');
+      setPhone('');
+      setSelectedBatch(null);
+      fetchInitialData();
+    } catch (err: any) {
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Error', 
+        text2: err?.message || 'Could not add student.' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const renderStudent = ({ item }: { item: (typeof mockStudents)[0] }) => {
-    const statusStyle = getStatusStyle(item.status);
+  const renderStudent = ({ item }: { item: User }) => {
+    const avatarBg = '#EEF2FF';
+    const avatarColor = '#0F172A';
+    const batchName = typeof item.batchId === 'object' ? item.batchId?.name : (batches.find(b => b._id === item.batchId)?.name || 'Unassigned');
 
     return (
       <TouchableOpacity
         style={styles.studentItem}
         activeOpacity={0.7}
-        onPress={() => onNavigateStudent(item.id)}
+        onPress={() => onNavigateStudent(item._id)}
       >
-        <View style={[styles.avatar, { backgroundColor: item.avatarBg }]}>
-          <Text style={[styles.avatarText, { color: item.avatarColor }]}>
+        <View style={[styles.avatar, { backgroundColor: avatarBg }]}>
+          <Text style={[styles.avatarText, { color: avatarColor }]}>
             {getInitials(item.name)}
           </Text>
         </View>
-
+190: 
         <View style={styles.info}>
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.subtitle}>
-            {item.batch} • Roll {item.roll}
+            {batchName} • {item.address}
           </Text>
         </View>
 
-        <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-          <Text style={[styles.statusText, { color: statusStyle.text }]}>
-            {item.status}
+        <View style={[styles.statusBadge, { backgroundColor: '#ECFDF5' }]}>
+          <Text style={[styles.statusText, { color: '#059669' }]}>
+            Active
           </Text>
         </View>
       </TouchableOpacity>
@@ -234,17 +249,23 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
           />
         </View>
 
-        {/* Student List */}
-        <FlatList
-          data={mockStudents}
-          keyExtractor={item => item.id}
-          renderItem={renderStudent}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
-          }
-        />
+        {isLoading && students.length === 0 ? (
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+        ) : (
+          <FlatList
+            data={students.filter(s => 
+              s.role === 'student' && 
+              s.name.toLowerCase().includes(searchQuery.toLowerCase())
+            )}
+            keyExtractor={item => item._id}
+            renderItem={renderStudent}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+            }
+          />
+        )}
 
         {/* Add Student Modal */}
         <Modal
@@ -291,6 +312,25 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                   />
 
                   <Input
+                    label="Email Address"
+                    placeholder="rahul@example.com"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    error={errors.email}
+                  />
+
+                  <Input
+                    label="Password"
+                    placeholder="Enter min 6 characters"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    error={errors.password}
+                  />
+
+                  <Input
                     label="Phone Number"
                     placeholder="e.g. +91 9876543210"
                     value={phone}
@@ -309,7 +349,7 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                     error={errors.address}
                   />
 
-                  <Text style={styles.fieldLabel}>Assign Batch</Text>
+                  <Text style={styles.fieldLabel}>Assign Batch (Optional)</Text>
                   <TouchableOpacity
                     style={styles.batchSelector}
                     onPress={() => setBatchPickerVisible(true)}
@@ -319,12 +359,12 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                       <Text
                         style={[
                           styles.batchSelectorText,
-                          selectedBatch !== 'Select Batch' && {
+                          selectedBatch && {
                             color: colors.text,
                           },
                         ]}
                       >
-                        {selectedBatch}
+                        {selectedBatch?.name || 'Unassigned'}
                       </Text>
                     </View>
                     <ChevronDown size={20} color={colors.textMuted} />
@@ -334,7 +374,7 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                 <Button
                   title="Register Student"
                   onPress={handleAddStudent}
-                  disabled={!name || selectedBatch === 'Select Batch'}
+                  loading={isLoading}
                   style={styles.submitBtn}
                 />
               </View>
@@ -358,9 +398,20 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                 </TouchableOpacity>
               </View>
               <ScrollView>
-                {availableBatches.map(batch => (
+                <TouchableOpacity
+                  style={styles.pickerItem}
+                  onPress={() => {
+                    setSelectedBatch(null);
+                    setBatchPickerVisible(false);
+                  }}
+                >
+                  <Text style={[styles.pickerItemText, !selectedBatch && styles.selectedItemText]}>
+                    Unassigned
+                  </Text>
+                </TouchableOpacity>
+                {batches.map(batch => (
                   <TouchableOpacity
-                    key={batch}
+                    key={batch._id}
                     style={styles.pickerItem}
                     onPress={() => {
                       setSelectedBatch(batch);
@@ -370,10 +421,10 @@ export const StudentsScreen: React.FC<StudentsScreenProps> = ({
                     <Text
                       style={[
                         styles.pickerItemText,
-                        selectedBatch === batch && styles.selectedItemText,
+                        selectedBatch?._id === batch._id && styles.selectedItemText,
                       ]}
                     >
-                      {batch}
+                      {batch.name}
                     </Text>
                   </TouchableOpacity>
                 ))}

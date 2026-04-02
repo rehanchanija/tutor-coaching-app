@@ -4,9 +4,16 @@ export interface Subject {
   _id: string;
   name: string;
   batchId: string;
+  totalChapters?: number;
+  completedChapters?: number;
+  progress?: number;
 }
 
 export const subjectService = {
+  getAll: async (): Promise<Subject[]> => {
+    return apiCall('/subjects');
+  },
+
   getByBatch: async (batchId: string): Promise<Subject[]> => {
     return apiCall(`/subjects/${batchId}`);
   },

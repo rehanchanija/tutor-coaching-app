@@ -29,6 +29,7 @@ const App = () => {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Login');
   const [activeTab, setActiveTab] = useState<TabName>('Dashboard');
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [selectedBatchName, setSelectedBatchName] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [selectedBatchChat, setSelectedBatchChat] = useState<{id: string, name: string} | null>(null);
   const [userData, setUserData] = useState<any>(null);
@@ -37,20 +38,20 @@ const App = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log('--- APP BOOT: Checking Authentication ---');
+
         const session = await storageService.getSession();
-        console.log('--- APP BOOT: Session Result:', !!session);
+
         
         if (session && session.token) {
-          console.log('--- APP BOOT: Auto-Login Success ---');
+
           setUserData(session.user);
           setIsAuthenticated(true);
           setCurrentScreen('Main');
         } else {
-          console.log('--- APP BOOT: Auto-Login Failed (No Session) ---');
+
         }
       } catch (e) {
-        console.error('--- APP BOOT ERROR: Auth check failed ---', e);
+
       } finally {
         setTimeout(() => setIsInitialLoading(false), 500); // Small delay to avoid flash
       }
@@ -72,12 +73,14 @@ const App = () => {
     setActiveTab('Dashboard');
     setUserData(null);
     setSelectedBatchId(null);
+    setSelectedBatchName(null);
     setSelectedSubjectId(null);
   };
 
 
-  const handleNavigateBatch = (batchId: string) => {
+  const handleNavigateBatch = (batchId: string, batchName?: string) => {
     setSelectedBatchId(batchId);
+    if (batchName) setSelectedBatchName(batchName);
     setCurrentScreen('Subject');
   };
 
@@ -99,6 +102,7 @@ const App = () => {
       return (
         <SubjectScreen
           batchId={selectedBatchId || ''}
+          batchName={selectedBatchName || undefined}
           onBack={() => setCurrentScreen('Main')}
           onNavigateCourse={handleNavigateSubject}
         />
@@ -171,7 +175,7 @@ const App = () => {
       case 'Dashboard':
         return (
           <DashboardScreen 
-            onNavigateBatch={handleNavigateBatch} 
+            onNavigateBatch={(id, name) => handleNavigateBatch(id, name)} 
             onNavigateNotifications={() => setCurrentScreen('Notifications')}
             userName={userData?.name}
           />

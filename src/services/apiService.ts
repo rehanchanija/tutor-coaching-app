@@ -1,6 +1,7 @@
 import { storageService } from './storageService';
 
-const BASE_URL = 'http://tutor-coaching-backend.vercel.app';
+// const BASE_URL = 'http://tutor-coaching-backend.vercel.app';
+const BASE_URL = 'http://192.168.29.69:3000';
 // ';
 
 export const apiCall = async (
@@ -34,12 +35,19 @@ export const apiCall = async (
 
     // Unwrap Nested Data (Backend uses TransformInterceptor)
     if (responseData && responseData.data !== undefined) {
+      console.log(
+        `API Success [${response.status}] ${endpoint}:`,
+        responseData.data,
+      );
       return responseData.data;
     }
 
+    console.log(
+      `API Raw response [${response.status}] ${endpoint}:`,
+      responseData,
+    );
     return responseData;
   } catch (error) {
-    console.error(`API Call failed: ${endpoint}`, error);
     throw error;
   }
 };

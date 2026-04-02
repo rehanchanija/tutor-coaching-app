@@ -63,23 +63,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     if (validate()) {
       setIsLoading(true);
       try {
-        console.log('Attempting login...');
+
         const data = await authService.login(email, password);
-        console.log('Login Response Data:', JSON.stringify(data));
+
 
         // Capture token if it exists in response
         const token = data.access_token || data.token;
-        console.log('Captured Token:', token);
+
         
         if (token) {
-          console.log('Saving session with storageService...');
+
           await storageService.saveSession(token, data.user);
           
           // IMMEDIATE VERIFY
           const verified = await storageService.getSession();
-          console.log('IMMEDIATE VERIFY RESULT (SHOULD BE TRUE):', !!verified);
+
         } else {
-          console.warn('WARNING: No token found in response!');
+
         }
 
         Toast.show({

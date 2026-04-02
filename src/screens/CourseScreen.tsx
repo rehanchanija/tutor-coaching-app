@@ -30,7 +30,10 @@ interface CourseScreenProps {
   onBack: () => void;
 }
 
-export const CourseScreen: React.FC<CourseScreenProps> = ({ subjectId, onBack }) => {
+export const CourseScreen: React.FC<CourseScreenProps> = ({
+  subjectId,
+  onBack,
+}) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -46,10 +49,16 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ subjectId, onBack })
   const fetchCourses = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching Courses for Subject ID:', subjectId);
       const data = await courseService.getBySubject(subjectId);
+      console.log('Fetched Chapters:', data.length);
       setCourses(data);
     } catch (err) {
-      console.error('Error fetching courses', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Could not fetch data.',
+      });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -82,60 +91,80 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ subjectId, onBack })
     }
   };
 
-  const toggleStatus = async (id: string, currentStatus: boolean) => {
+  const toggleStatus = async (id: string, isCurrentlyCompleted: boolean) => {
     try {
-      const updated = await courseService.updateProgress(id, !currentStatus);
-      setCourses(prev => prev.map(c => c._id === id ? updated : c));
+      const newProgress = isCurrentlyCompleted ? 0 : 100;
+      const updated = await courseService.updateProgress(id, newProgress);
+      setCourses(prev => prev.map(c => (c._id === id ? updated : c)));
     } catch (err) {
-      console.error('Failed to update status', err);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Update failed.' });
     }
   };
 
   const handleCreateChapter = async () => {
     if (!validate()) return;
-    
+
     setIsLoading(true);
     try {
-      await courseService.create({
+      const courseData = {
         name: chapterName,
         subjectId: subjectId,
-      });
+      };
+
+      console.log('Creating Chapter with data:', courseData);
+
+      await courseService.create(courseData);
+
+      console.log('Chapter created successfully!');
 
       Toast.show({
         type: 'success',
         text1: 'Success',
         text2: 'Chapter created successfully!',
       });
-      
+
       setModalVisible(false);
       setChapterName('');
       setLectureCount('');
       setErrors({});
       fetchCourses();
     } catch (err) {
-      console.error('Failed to create chapter', err);
+      console.error('Failed to create chapter error:', err);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Creation failed.' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const totalChapters = courses.length;
-  const completedChapters = courses.filter(ch => ch.isCompleted).length;
-  const progressPercent = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+  const completedChapters = courses.filter(ch => ch.progress === 100).length;
+  const progressPercent =
+    totalChapters > 0
+      ? Math.round((completedChapters / totalChapters) * 100)
+      : 0;
 
   const renderChapter = ({ item, index }: { item: Course; index: number }) => (
     <TouchableOpacity
       style={styles.chapterItem}
-      onPress={() => toggleStatus(item._id, item.isCompleted)}
+      onPress={() => toggleStatus(item._id, item.progress === 100)}
       activeOpacity={0.8}
     >
       <View
         style={[
           styles.chapterNumberCircle,
-          item.isCompleted ? { backgroundColor: colors.primaryLight } : { backgroundColor: colors.background },
+          item.progress === 100
+            ? { backgroundColor: colors.primaryLight }
+            : { backgroundColor: colors.background },
         ]}
       >
-        <Text style={[styles.chapterNumberText, item.isCompleted ? { color: colors.text } : { color: colors.textLight }]}>
+        <Text
+          style={[
+            styles.chapterNumberText,
+            item.progress === 100
+              ? { color: colors.text }
+              : { color: colors.textLight },
+          ]}
+        >
           {index + 1}
         </Text>
       </View>
@@ -144,20 +173,20 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ subjectId, onBack })
         <Text
           style={[
             styles.chapterName,
-            item.isCompleted && styles.completedChapterName,
+            item.progress === 100 && styles.completedChapterName,
           ]}
         >
           {item.name}
         </Text>
         <Text style={styles.chapterSubtext}>
-          {item.isCompleted ? 'Completed' : 'Pending'}
+          {item.progress === 100 ? 'Completed' : 'Pending'}
         </Text>
       </View>
 
       <View style={styles.statusIconBox}>
         <Checkbox
-          checked={item.isCompleted}
-          onChange={() => toggleStatus(item._id, item.isCompleted)}
+          checked={item.progress === 100}
+          onChange={() => toggleStatus(item._id, item.progress === 100)}
         />
       </View>
     </TouchableOpacity>
@@ -240,7 +269,9 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ subjectId, onBack })
         </Modal>
 
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.primaryLight }]}>
+          <View
+            style={[styles.statCard, { backgroundColor: colors.primaryLight }]}
+          >
             <Text style={[styles.statValue, { color: colors.text }]}>
               {totalChapters}
             </Text>
@@ -271,7 +302,11 @@ export const CourseScreen: React.FC<CourseScreenProps> = ({ subjectId, onBack })
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+            />
           }
         />
       )}
@@ -343,19 +378,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  tabBar: {
+  tabsRow: {
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
     marginHorizontal: 24,
-    borderRadius: 99,
+    borderRadius: 14,
     padding: 4,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   tab: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 99,
+    borderRadius: 11,
   },
   activeTab: {
     backgroundColor: '#FFFFFF',

@@ -24,9 +24,10 @@ import { ProgressBar } from '../components/ProgressBar';
 import { colors, radius, spacing, typography } from '../theme/Theme';
 import { dashboardService, DashboardStats } from '../services/dashboardService';
 import { batchService, Batch } from '../services/batchService';
+import Toast from 'react-native-toast-message';
 
 interface DashboardScreenProps {
-  onNavigateBatch: (batchId: string) => void;
+  onNavigateBatch: (batchId: string, batchName?: string) => void;
   onNavigateNotifications: () => void;
   userName?: string;
 }
@@ -40,7 +41,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [batches, setBatches] = useState<Batch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filter, setFilter] = useState<'Morning' | 'Evening'>('Morning');
+  const [filter, setFilter] = useState<'morning' | 'evening'>('morning');
 
   useEffect(() => {
     fetchData();
@@ -55,7 +56,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       setStats(statsData);
       setBatches(batchesData);
     } catch (err) {
-      console.error('Failed to fetch dashboard data', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load dashboard data.',
+      });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -70,7 +75,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const filteredBatches = batches.filter(b => b.type === filter);
 
   const renderBatch = ({ item }: { item: Batch }) => (
-    <Card onPress={() => onNavigateBatch(item._id)} style={styles.batchCard}>
+    <Card onPress={() => onNavigateBatch(item._id, item.name)} style={styles.batchCard}>
       <View style={styles.batchContainer}>
         <View style={styles.iconCircle}>
           <LibraryBig color={colors.primary} size={22} strokeWidth={2.5} />
@@ -137,34 +142,34 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <Text style={typography.h2}>Current Batches</Text>
           <View style={styles.togglePill}>
             <TouchableOpacity
-              onPress={() => setFilter('Morning')}
-              style={[styles.pill, filter === 'Morning' && styles.activePill]}
+              onPress={() => setFilter('morning')}
+              style={[styles.pill, filter === 'morning' && styles.activePill]}
             >
               <Sun
                 size={14}
-                color={filter === 'Morning' ? colors.primary : colors.textLight}
+                color={filter === 'morning' ? colors.primary : colors.textLight}
               />
               <Text
                 style={[
                   styles.pillText,
-                  filter === 'Morning' && styles.activePillText,
+                  filter === 'morning' && styles.activePillText,
                 ]}
               >
                 Morning
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => setFilter('Evening')}
-              style={[styles.pill, filter === 'Evening' && styles.activePill]}
+              onPress={() => setFilter('evening')}
+              style={[styles.pill, filter === 'evening' && styles.activePill]}
             >
               <Moon
                 size={14}
-                color={filter === 'Evening' ? colors.primary : colors.textLight}
+                color={filter === 'evening' ? colors.primary : colors.textLight}
               />
               <Text
                 style={[
                   styles.pillText,
-                  filter === 'Evening' && styles.activePillText,
+                  filter === 'evening' && styles.activePillText,
                 ]}
               >
                 Evening

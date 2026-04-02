@@ -13,6 +13,7 @@ import {
   Keyboard,
   Platform,
   KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -40,12 +41,14 @@ import Toast from 'react-native-toast-message';
 
 interface SubjectScreenProps {
   batchId: string;
+  batchName?: string;
   onBack: () => void;
   onNavigateCourse: (subjectId: string) => void;
 }
 
 export const SubjectScreen: React.FC<SubjectScreenProps> = ({
   batchId,
+  batchName,
   onBack,
   onNavigateCourse,
 }) => {
@@ -54,7 +57,12 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
   const [batchDetail, setBatchDetail] = useState<Batch | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = React.useState<'Subjects' | 'Students'>('Subjects');
+  const [activeTab, setActiveTab] = React.useState<'Subjects' | 'Students'>(
+    'Subjects',
+  );
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [selectedBatchForStudent, setSelectedBatchForStudent] = useState<Batch | null>(null);
+  const [isBatchPickerVisible, setBatchPickerVisible] = useState(false);
 
   // Input states for Modal
   const [modalVisible, setModalVisible] = useState(false);
@@ -76,14 +84,37 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
   const fetchInitialData = async () => {
     setIsLoading(true);
     try {
-      const [subjectsData, batchInfo] = await Promise.all([
-        subjectService.getByBatch(batchId),
-        batchService.findById(batchId),
-      ]);
-      setSubjects(subjectsData);
-      setBatchDetail(batchInfo);
-    } catch (err) {
-      console.error('Error fetching subject data', err);
+      console.log('Fetching Initial Data for Batch ID:', batchId);
+
+      // Fetch subjects for this batch
+      try {
+        const subjectsData = await subjectService.getByBatch(batchId);
+        console.log(
+          `Fetched Subjects for Batch ${batchId}:`,
+          subjectsData.length,
+        );
+        setSubjects(subjectsData);
+      } catch (subErr) {}
+
+      // Fetch batch detail info
+      try {
+        const [batchInfo, allBatches] = await Promise.all([
+          batchService.findById(batchId),
+          batchService.getAll(),
+        ]);
+        console.log('Fetched Batch Info:', batchInfo?.name);
+        setBatchDetail(batchInfo);
+        setBatches(allBatches);
+        // Default the student registration to CURRENT batch
+        setSelectedBatchForStudent(batchInfo);
+      } catch (batchErr) {}
+    } catch (err: any) {
+      console.error('Unified fetch error:', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: err?.message || 'Could not fetch data.',
+      });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -95,7 +126,11 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
       const data = await studentService.getAll(batchId);
       setStudents(data);
     } catch (err) {
-      console.error('Error fetching students', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Could not fetch students.',
+      });
     }
   };
 
@@ -130,20 +165,26 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
 
   const handleCreateSubject = async () => {
     if (!validate()) return;
-    
+
     setIsLoading(true);
     try {
-      await subjectService.create({
+      const subjectData = {
         name: subjectName,
         batchId: batchId,
-      });
+      };
+
+      console.log('Creating Subject with data:', subjectData);
+
+      await subjectService.create(subjectData);
+
+      console.log('Subject created successfully!');
 
       Toast.show({
         type: 'success',
         text1: 'Success',
         text2: 'Subject created successfully!',
       });
-      
+
       setModalVisible(false);
       setSubjectName('');
       setTopics('');
@@ -151,7 +192,6 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
       setErrors({});
       fetchInitialData();
     } catch (err) {
-      console.error('Failed to create subject', err);
       Toast.show({
         type: 'error',
         text1: 'Creation Error',
@@ -170,7 +210,11 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.subjectName}>{item.name}</Text>
-          <Text style={styles.topicText} numberOfLines={1}>Chapters and progress coming soon</Text>
+          <Text style={styles.topicText} numberOfLines={1}>
+            {item.totalChapters === 0
+              ? 'No chapters added yet'
+              : `${item.completedChapters}/${item.totalChapters} Chapters Completed`}
+          </Text>
         </View>
         <ChevronRight color={colors.textMuted} size={20} />
       </View>
@@ -178,11 +222,19 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
       <View style={styles.cardFooter}>
         <View style={styles.metaBox}>
           <LayoutGrid color={colors.textLight} size={14} />
-          <Text style={styles.metaText}>0 Chapters</Text>
+          <Text style={styles.metaText}>
+            {item.totalChapters || 0} Chapters
+          </Text>
         </View>
-        <Text style={styles.progressValue}>0%</Text>
+        <Text style={styles.progressValue}>
+          {Math.round(item.progress || 0)}%
+        </Text>
       </View>
-      <ProgressBar progress={0} color={colors.primary} height={6} />
+      <ProgressBar
+        progress={item.progress || 0}
+        color={colors.primary}
+        height={6}
+      />
     </Card>
   );
 
@@ -201,22 +253,33 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
 
   const handleCreateStudent = async () => {
     if (!studentName || !studentEmail || !studentPhone || !studentAddress) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Name, Email, Phone and Address are required' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Name, Email, Phone and Address are required',
+      });
       return;
     }
-    
+
     setIsLoading(true);
     try {
-      await studentService.create({
+      const stuData = {
         name: studentName,
         email: studentEmail,
         phone: studentPhone,
         address: studentAddress,
-        password: studentPassword || '123456', // Default password if empty
+        password: studentPassword || '123456',
         batchId: batchId,
-      });
+      };
+      console.log('[SubjectScreen] Attempting to create student with:', stuData);
+      
+      await studentService.create(stuData);
 
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Student added successfully!' });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Student added successfully!',
+      });
       setStudentModalVisible(false);
       setStudentName('');
       setStudentEmail('');
@@ -224,16 +287,24 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
       setStudentAddress('');
       setStudentPassword('');
       fetchStudents();
-    } catch (err) {
-      console.error('Failed to create student', err);
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Could not add student.' });
+    } catch (err: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: err?.message || 'Could not add student.',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const renderStudent = ({ item }: { item: User }) => {
-    const initials = item.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const initials = item.name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
     return (
       <View style={styles.studentItem}>
         <View style={styles.studentAvatar}>
@@ -244,10 +315,7 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
           <Text style={styles.studentRoll}>{item.email}</Text>
         </View>
         <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: colors.successLight },
-          ]}
+          style={[styles.statusBadge, { backgroundColor: colors.successLight }]}
         >
           <Text style={[styles.statusText, { color: colors.success }]}>
             Active
@@ -266,9 +334,14 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
             <TouchableOpacity onPress={onBack} style={styles.backBtn}>
               <ChevronLeft color="#FFFFFF" size={28} strokeWidth={2.5} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{batchDetail?.name || 'Loading...'}</Text>
+            <Text style={styles.headerTitle}>
+              {batchName || batchDetail?.name || 'Loading...'}
+            </Text>
             <View style={{ flex: 1 }} />
-            <TouchableOpacity onPress={handlePlusPress} style={styles.plusIconButton}>
+            <TouchableOpacity
+              onPress={handlePlusPress}
+              style={styles.plusIconButton}
+            >
               <Plus color="#FFFFFF" size={24} strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
@@ -283,21 +356,24 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <Pressable 
-            style={StyleSheet.absoluteFill} 
+          <Pressable
+            style={StyleSheet.absoluteFill}
             onPress={() => {
               Keyboard.dismiss();
               setModalVisible(false);
-            }} 
+            }}
           />
-          <KeyboardAvoidingView 
+          <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.keyboardAvoidingView}
           >
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Add New Subject</Text>
-                <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  style={styles.closeBtn}
+                >
                   <X color="#94A3B8" size={22} strokeWidth={2.5} />
                 </TouchableOpacity>
               </View>
@@ -324,6 +400,52 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
         </View>
       </Modal>
 
+      {/* Batch Picker Modal */}
+      <Modal
+        visible={isBatchPickerVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setBatchPickerVisible(false)}
+      >
+        <View style={[styles.modalOverlay, { justifyContent: 'flex-end' }]}>
+          <View style={[styles.modalContent, { height: '50%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Batch</Text>
+              <TouchableOpacity onPress={() => setBatchPickerVisible(false)}>
+                <X color={colors.textMuted} size={24} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ flex: 1 }}>
+              <TouchableOpacity
+                style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}
+                onPress={() => {
+                  setSelectedBatchForStudent(null);
+                  setBatchPickerVisible(false);
+                }}
+              >
+                <Text style={{ color: !selectedBatchForStudent ? colors.primary : colors.text }}>
+                  Unassigned / No Batch
+                </Text>
+              </TouchableOpacity>
+              {batches.map(batch => (
+                <TouchableOpacity
+                  key={batch._id}
+                  style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}
+                  onPress={() => {
+                    setSelectedBatchForStudent(batch);
+                    setBatchPickerVisible(false);
+                  }}
+                >
+                  <Text style={{ color: selectedBatchForStudent?._id === batch._id ? colors.primary : colors.text }}>
+                    {batch.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Create Student Modal */}
       <Modal
         visible={studentModalVisible}
@@ -332,56 +454,77 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
         onRequestClose={() => setStudentModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <Pressable 
-            style={StyleSheet.absoluteFill} 
-            onPress={() => setStudentModalVisible(false)} 
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setStudentModalVisible(false)}
           />
-          <KeyboardAvoidingView 
+          <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.keyboardAvoidingView}
           >
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Add New Student</Text>
-                <TouchableOpacity onPress={() => setStudentModalVisible(false)} style={styles.closeBtn}>
+                <TouchableOpacity
+                  onPress={() => setStudentModalVisible(false)}
+                  style={styles.closeBtn}
+                >
                   <X color="#94A3B8" size={22} strokeWidth={2.5} />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.modalBody}>
-                <Input
-                  label="Full Name"
-                  placeholder="John Doe"
-                  value={studentName}
-                  onChangeText={setStudentName}
-                />
-                <Input
-                  label="Email ID"
-                  placeholder="john@example.com"
-                  value={studentEmail}
-                  onChangeText={setStudentEmail}
-                  keyboardType="email-address"
-                />
-                <Input
-                  label="Phone Number"
-                  placeholder="+91 99999 00000"
-                  value={studentPhone}
-                  onChangeText={setStudentPhone}
-                  keyboardType="phone-pad"
-                />
-                <Input
-                  label="Permanent Address"
-                  placeholder="Street, City, Pin"
-                  value={studentAddress}
-                  onChangeText={setStudentAddress}
-                />
-                <Input
-                  label="Password"
-                  placeholder="Default: 123456"
-                  value={studentPassword}
-                  onChangeText={setStudentPassword}
-                  secureTextEntry
-                />
+                <ScrollView 
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                >
+                  <Input
+                    label="Full Name"
+                    placeholder="John Doe"
+                    value={studentName}
+                    onChangeText={setStudentName}
+                  />
+                  <Input
+                    label="Email ID"
+                    placeholder="john@example.com"
+                    value={studentEmail}
+                    onChangeText={setStudentEmail}
+                    keyboardType="email-address"
+                  />
+                  <Input
+                    label="Phone Number"
+                    placeholder="+91 99999 00000"
+                    value={studentPhone}
+                    onChangeText={setStudentPhone}
+                    keyboardType="phone-pad"
+                  />
+                  <Input
+                    label="Permanent Address"
+                    placeholder="Street, City, Pin"
+                    value={studentAddress}
+                    onChangeText={setStudentAddress}
+                  />
+                  <Input
+                    label="Password"
+                    placeholder="Default: 123456"
+                    value={studentPassword}
+                    onChangeText={setStudentPassword}
+                    secureTextEntry
+                  />
+
+                  <Text style={[styles.modalTitle, { fontSize: 14, marginBottom: 8, marginTop: 10, color: colors.text }]}>
+                    Assign Batch (Optional)
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
+                    onPress={() => setBatchPickerVisible(true)}
+                  >
+                    <Text style={{ color: selectedBatchForStudent ? colors.text : colors.textLight }}>
+                      {selectedBatchForStudent?.name || 'Unassigned'}
+                    </Text>
+                    <ChevronRight color={colors.textMuted} size={18} />
+                  </TouchableOpacity>
+                </ScrollView>
               </View>
 
               <Button
@@ -392,6 +535,52 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
               />
             </View>
           </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      {/* Batch Picker Modal */}
+      <Modal
+        visible={isBatchPickerVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setBatchPickerVisible(false)}
+      >
+        <View style={[styles.modalOverlay, { justifyContent: 'flex-end' }]}>
+          <View style={[styles.modalContent, { height: '50%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Batch</Text>
+              <TouchableOpacity onPress={() => setBatchPickerVisible(false)}>
+                <X color={colors.textMuted} size={24} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ flex: 1 }}>
+              <TouchableOpacity
+                style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}
+                onPress={() => {
+                  setSelectedBatchForStudent(null);
+                  setBatchPickerVisible(false);
+                }}
+              >
+                <Text style={{ color: !selectedBatchForStudent ? colors.primary : colors.text }}>
+                  Unassigned / No Batch
+                </Text>
+              </TouchableOpacity>
+              {batches.map(batch => (
+                <TouchableOpacity
+                  key={batch._id}
+                  style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}
+                  onPress={() => {
+                    setSelectedBatchForStudent(batch);
+                    setBatchPickerVisible(false);
+                  }}
+                >
+                  <Text style={{ color: selectedBatchForStudent?._id === batch._id ? colors.primary : colors.text }}>
+                    {batch.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         </View>
       </Modal>
 
@@ -440,20 +629,28 @@ export const SubjectScreen: React.FC<SubjectScreenProps> = ({
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                  <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={onRefresh}
+                    colors={[colors.primary]}
+                  />
                 }
               />
             )}
 
             {activeTab === 'Students' && (
               <FlatList
-                data={students}
+                data={students.filter(s => s.role === 'student')}
                 renderItem={renderStudent}
                 keyExtractor={item => item._id}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                  <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={onRefresh}
+                    colors={[colors.primary]}
+                  />
                 }
               />
             )}
@@ -666,6 +863,15 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     marginBottom: 24,
+  },
+  input: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '600',
+    marginBottom: 16,
   },
   modalActionBtn: {
     borderRadius: 16,

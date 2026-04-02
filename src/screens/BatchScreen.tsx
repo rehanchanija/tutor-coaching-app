@@ -39,7 +39,7 @@ import { batchService, Batch } from '../services/batchService';
 import Toast from 'react-native-toast-message';
 
 interface BatchScreenProps {
-  onNavigateSubject: (batchId: string) => void;
+  onNavigateSubject: (batchId: string, batchName?: string) => void;
 }
 
 export const BatchScreen: React.FC<BatchScreenProps> = ({
@@ -71,7 +71,6 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
       const data = await batchService.getAll();
       setBatches(data);
     } catch (err) {
-      console.error('Failed to fetch batches', err);
       Toast.show({
         type: 'error',
         text1: 'Fetch Error',
@@ -117,29 +116,35 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
 
   const handleCreateBatch = async () => {
     if (!validate()) return;
-    
+
     setIsLoading(true);
     try {
       // Parse DD/MM/YYYY to ISO
       const [sd, sm, sy] = startDate.split('/').map(Number);
       const [cd, cm, cy] = completionDate.split('/').map(Number);
-      
+
       const sIso = new Date(sy, sm - 1, sd).toISOString();
       const cIso = new Date(cy, cm - 1, cd).toISOString();
 
-      await batchService.create({
+      const batchData = {
         name: batchName,
         type: batchType.toLowerCase() as 'morning' | 'evening',
         startDate: sIso,
         completionDate: cIso,
-      });
+      };
+
+      console.log('Creating Batch with data:', batchData);
+
+      await batchService.create(batchData);
+
+      console.log('Batch created successfully!');
 
       Toast.show({
         type: 'success',
         text1: 'Success',
         text2: 'Batch created successfully!',
       });
-      
+
       setModalVisible(false);
       setBatchName('');
       setBatchType('Morning');
@@ -148,7 +153,6 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
       setErrors({});
       fetchBatches();
     } catch (err) {
-      console.error('Failed to create batch', err);
       Toast.show({
         type: 'error',
         text1: 'Creation Error',
@@ -161,8 +165,18 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
 
   const [showYearSelector, setShowYearSelector] = useState(false);
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   const filteredBatches = batches.filter(batch =>
@@ -171,13 +185,16 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
 
   const renderBatch = ({ item }: { item: Batch }) => {
     // Backend doesn't provide progress/students count yet, using mock defaults
-    const progress = 0; 
+    const progress = 0;
     const students = 0;
     const isComplete = progress >= 100;
     const statusText = isComplete ? 'Complete' : 'Active';
 
     return (
-      <Card onPress={() => onNavigateSubject(item._id)} style={styles.batchCard}>
+      <Card
+        onPress={() => onNavigateSubject(item._id, item.name)}
+        style={styles.batchCard}
+      >
         <View style={styles.headerRow}>
           <View style={styles.titleWrapper}>
             <View style={styles.iconCircle}>
@@ -280,7 +297,11 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                colors={[colors.primary]}
+              />
             }
           />
         )}
@@ -468,7 +489,8 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
                             <Text
                               style={[
                                 styles.yearItemText,
-                                year === calendarYear && styles.selectedYearText,
+                                year === calendarYear &&
+                                  styles.selectedYearText,
                               ]}
                             >
                               {year}
@@ -584,7 +606,8 @@ export const BatchScreen: React.FC<BatchScreenProps> = ({
                                       Toast.show({
                                         type: 'error',
                                         text1: 'Invalid Date',
-                                        text2: 'Completion date cannot be before Start date!',
+                                        text2:
+                                          'Completion date cannot be before Start date!',
                                       });
                                       return;
                                     }
